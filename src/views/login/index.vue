@@ -82,9 +82,11 @@ export default {
     async getCode () {
       // 校验手机号和图形验证码格式
       if (!this.validFn()) { return }
+
       // 发送获取短信验证码的请求
       await getMsgCode(this.picCode, this.picKey, this.phoneNum)
       Toast('短信发送成功，请注意查收')
+
       // 发送短信验证码
       // 只有当计时器处于未开启状态并且当前时间和总时间一致时说明可以开启倒计时
       if (!this.timerId && this.timeNow === this.totalTime) {
@@ -103,6 +105,7 @@ export default {
         Toast('获取短信验证码成功')
       }
     },
+
     // 登录功能
     async login () {
       // 校验手机号和图形验证码格式
@@ -116,6 +119,7 @@ export default {
       const res = await codeLogin(this.phoneNum, this.smsCode)
       if (res.status === 200) {
         Toast('登录成功')
+        this.$store.commit('User/setUserInfo', res.data)
         this.$router.push('/home')
       } else {
         Toast('登录失败，请检查手机号和验证码是否正确')
