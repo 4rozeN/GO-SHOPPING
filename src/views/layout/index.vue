@@ -15,7 +15,7 @@ export default {
   name: 'LayoutIndex',
   data () {
     return {
-      active: true
+      active: 1
     }
   }
 }

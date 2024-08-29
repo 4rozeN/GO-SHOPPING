@@ -10,6 +10,7 @@ import Home from '@/views/layout/home'
 import Category from '@/views/layout/category'
 import Cart from '@/views/layout/cart'
 import User from '@/views/layout/user'
+import store from '@/store'
 
 Vue.use(VueRouter)
 
@@ -35,6 +36,28 @@ const routes = [
 
 const router = new VueRouter({
   routes
+})
+
+// 定义数组存储需要登录才能访问的路由
+const authNeedRouters = ['/myorder', '/pay', '/productdetail/:id']
+
+// 创建全局路由前置守卫
+router.beforeEach((to, from, next) => {
+  // 判断to的path是否存在登录的路由数组中
+  if (!authNeedRouters.includes(to.path)) {
+    // 不需要登录，直接进入
+    next()
+  } else {
+    // 判断是否有token（实际上需要调用后端接口校验token）
+    const token = store.state.User.userInfo.token
+    if (token) {
+      // 有token，可以进入
+      next()
+    } else {
+      // 没有token，跳转到登录页
+      next('/login')
+    }
+  }
 })
 
 export default router
