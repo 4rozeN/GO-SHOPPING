@@ -37,9 +37,8 @@
     <!-- 猜你喜欢 -->
     <div class="guess">
       <p class="guess-title">—— 猜你喜欢 ——</p>
-
       <div class="goods-list">
-        <GoodsItem v-for="item in 10" :key="item"></GoodsItem>
+        <GoodsItem v-for="item in prodsList" :key="item.goods_id" :goods="item"></GoodsItem>
       </div>
     </div>
   </div>
