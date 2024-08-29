@@ -23,18 +23,18 @@
           <img v-if="picUrl" :src="picUrl" @click="getPicCode" alt="">
         </div>
         <div class="form-item">
-          <input class="inp" placeholder="请输入短信验证码" type="text">
+          <input class="inp" v-model="smsCode" placeholder="请输入短信验证码" type="text">
           <button @click="getCode">{{ totalTime === timeNow ? '获取验证码' : `${timeNow}秒后重试` }}</button>
         </div>
       </div>
 
-      <div class="login-btn">登录</div>
+      <div class="login-btn" @click="login">登录</div>
     </div>
   </div>
 </template>
 
 <script>
-import { getMsgCode, getPicCode } from '@/api/login'
+import { codeLogin, getMsgCode, getPicCode } from '@/api/login'
 import { Toast } from 'vant'
 
 export default {
@@ -46,6 +46,7 @@ export default {
       reg_picCode: /^\w{4}$/, // 图形正则
       phoneNum: '', // 用户输入的手机号码
       picCode: '', // 用户输入的图形验证码
+      smsCode: '', // 用户输入的短信验证码
       picKey: '', // 图形验证码的key
       picUrl: '', // 存放要渲染的图形验证码的url
       timerId: null, // 计时器的id
@@ -102,13 +103,34 @@ export default {
         // 获取成功给予提示
         Toast('获取短信验证码成功')
       }
+    },
+    // 登录功能
+    async login () {
+      // 校验手机号和图形验证码格式
+      if (!this.validFn()) { return }
+      // 校验输入的短信验证码格式
+      if (!/^\d{6}$/.test(this.smsCode)) {
+        Toast('请输入正确的短信验证码！')
+        return
+      }
+
+      const res = await codeLogin(this.phoneNum, this.smsCode)
+      if (res.status === 200) {
+        Toast('登录成功')
+        this.$router.push('/home')
+      } else {
+        Toast('登录失败，请检查手机号和验证码是否正确')
+      }
     }
   },
+
+  // 页面销毁时清除定时器
   destroyed () {
     // 当用户退出登录页面清除定时器
     clearInterval(this.timerId)
   }
 }
+
 </script>
 
 <style lang="less" scoped>
