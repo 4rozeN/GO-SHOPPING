@@ -16,7 +16,7 @@
 
       <div class="form">
         <div class="form-item">
-          <input class="inp" maxlength="11" placeholder="请输入手机号码" type="text">
+          <input v-model="phoneNum" class="inp" maxlength="11" placeholder="请输入手机号码" type="text">
         </div>
         <div class="form-item">
           <input v-model="picCode" class="inp" maxlength="5" placeholder="请输入图形验证码" type="text">
@@ -24,7 +24,7 @@
         </div>
         <div class="form-item">
           <input class="inp" placeholder="请输入短信验证码" type="text">
-          <button>获取验证码</button>
+          <button @click="getCode">{{ totalTime === timeNow ? '获取验证码' : `${timeNow}秒后重试` }}</button>
         </div>
       </div>
 
@@ -34,26 +34,79 @@
 </template>
 
 <script>
-import { getPicCode } from '@/api/login'
+import { getMsgCode, getPicCode } from '@/api/login'
+import { Toast } from 'vant'
 
 export default {
   name: 'LoginIndex',
   data () {
     return {
+      // 手机号正则 1开头 3-9为第二位 接着9位数字
+      reg_phone: /^1[3-9]\d{9}$/,
+      reg_picCode: /^\w{4}$/, // 图形正则
+      phoneNum: '', // 用户输入的手机号码
       picCode: '', // 用户输入的图形验证码
       picKey: '', // 图形验证码的key
-      picUrl: '' // 存放要渲染的图形验证码的url
+      picUrl: '', // 存放要渲染的图形验证码的url
+      timerId: null, // 计时器的id
+      totalTime: 60, // 计时器的总时间
+      timeNow: 60 // 计时器当前的时间
     }
   },
   async created () {
     this.getPicCode()
   },
   methods: {
+    // 获取图形验证码
     async getPicCode () {
-      const { data: { base64, Key } } = await getPicCode
+      const { data: { base64, key } } = await getPicCode()
       this.picUrl = base64
-      this.picKey = Key
+      this.picKey = key
+    },
+
+    // 校验手机号和图形验证码
+    validFn () {
+      if (!this.reg_phone.test(this.phoneNum)) {
+        Toast('请输入正确的手机号！')
+        return false
+      }
+      if (!this.reg_picCode.test(this.picCode)) {
+        Toast('图形验证码错误！')
+        return false
+      }
+      return true
+    },
+
+    // 短信验证码获取
+    async getCode () {
+      // 发送获取短信验证码的请求
+      await getMsgCode(this.picCode, this.picKey, this.phoneNum)
+      // console.log(res)
+      Toast('短信发送成功，请注意查收')
+      // 校验手机号和图形验证码格式
+      if (!this.validFn()) { return }
+      // 发送短信验证码
+      // 只有当计时器处于未开启状态并且当前时间和总时间一致时说明可以开启倒计时
+      if (!this.timerId && this.timeNow === this.totalTime) {
+        // 开启计时器
+        this.timerId = setInterval(() => {
+          this.timeNow--
+
+          if (this.timeNow <= 0) {
+            // 停止计时器
+            clearInterval(this.timerId)
+            this.timerId = null
+            this.timeNow = this.totalTime
+          }
+        }, 1000)
+        // 获取成功给予提示
+        Toast('获取短信验证码成功')
+      }
     }
+  },
+  destroyed () {
+    // 当用户退出登录页面清除定时器
+    clearInterval(this.timerId)
   }
 }
 </script>
