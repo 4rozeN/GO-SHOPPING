@@ -80,12 +80,11 @@ export default {
 
     // 短信验证码获取
     async getCode () {
-      // 发送获取短信验证码的请求
-      await getMsgCode(this.picCode, this.picKey, this.phoneNum)
-      // console.log(res)
-      Toast('短信发送成功，请注意查收')
       // 校验手机号和图形验证码格式
       if (!this.validFn()) { return }
+      // 发送获取短信验证码的请求
+      await getMsgCode(this.picCode, this.picKey, this.phoneNum)
+      Toast('短信发送成功，请注意查收')
       // 发送短信验证码
       // 只有当计时器处于未开启状态并且当前时间和总时间一致时说明可以开启倒计时
       if (!this.timerId && this.timeNow === this.totalTime) {

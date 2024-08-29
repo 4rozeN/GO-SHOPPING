@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { Toast } from 'vant'
 
 // 创建axios实例
 const instance = axios.create({
@@ -21,10 +22,25 @@ instance.interceptors.request.use(function (config) {
 instance.interceptors.response.use(function (response) {
   // 2xx 范围内的状态码都会触发该函数。
   // 对响应数据做点什么 (默认axios会对响应多包装一层data，所以这里需要取出data)
-  return response.data
+  const res = response.data
+  if (res.status !== 200) {
+    Toast(res.message)
+    return Promise.reject(res.message)
+  }
+  return res
 }, function (error) {
   // 超出 2xx 范围的状态码都会触发该函数。
   // 对响应错误做点什么
+  if (error.response) {
+    // 服务器返回了错误响应
+    Toast(`服务器错误: ${error.response.data.status}`)
+  } else if (error.request) {
+    // 请求已发出，但没有收到响应
+    Toast('请求超时或网络错误')
+  } else {
+    // 其他错误
+    Toast('请求配置错误')
+  }
   return Promise.reject(error)
 })
 
