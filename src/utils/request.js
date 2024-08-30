@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { Toast } from 'vant'
+import store from '@/store'
 
 // 创建axios实例
 const instance = axios.create({
@@ -18,6 +19,13 @@ instance.interceptors.request.use(function (config) {
     forbidClick: true, // 禁止背景点击
     duration: 0 // 值为0时，toast不会自动关闭
   })
+
+  // 只要有token就在请求中携带，便于请求需要权限的接口
+  const token = store.getters.token
+  if (token) {
+    config.headers['Access-Token'] = token
+    config.headers.platform = 'h5'
+  }
   return config
 }, function (error) {
   // 对请求错误做些什么
@@ -42,7 +50,8 @@ instance.interceptors.response.use(function (response) {
   // 对响应错误做点什么
   if (error.response) {
     // 服务器返回了错误响应
-    Toast(`服务器错误: ${error.response.data.status}`)
+    Toast(`服务器错误: ${error.response.data.status}`) // 上限时注释掉
+    // Toast(`服务器错误`) // 上线时开启注释
   } else if (error.request) {
     // 请求已发出，但没有收到响应
     Toast('请求超时或网络错误')

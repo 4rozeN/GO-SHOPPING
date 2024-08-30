@@ -71,7 +71,7 @@
         <span>首页</span>
       </div>
       <div class="icon-cart">
-        <van-icon name="shopping-cart-o" />
+        <van-icon :badge="cartTotal || ''" name="shopping-cart-o" />
         <span>购物车</span>
       </div>
       <div class="btn-add" @click="add">加入购物车</div>
@@ -113,6 +113,7 @@
 
 <script>
 import { getGoodsDetail, getGoodsCommentDetail } from '@/api/goodsDetail'
+import { addCart } from '@/api/cart'
 import CountBox from '@/components/CountBox.vue'
 export default {
   name: 'ProDetail',
@@ -131,7 +132,8 @@ export default {
     // console.log(res)
     this.goodsDetailObj = res.data.detail
     // console.log(this.goodsDetailObj)
-    this.images = this.goodsDetailObj.goods_images
+    this.goodsSkuId = this.goodsDetailObj.skuList[0].goods_sku_id // 得到商品规格id
+    this.images = this.goodsDetailObj.goods_images // 得到商品轮播图
 
     // 获取商品详情-评价部分
     const commentRes = await getGoodsCommentDetail({
@@ -155,15 +157,17 @@ export default {
   },
   data () {
     return {
-      addCount: 1, // 加入购物车数量
+      addCount: 1, // 加入购物车的商品数量
       showPannel: false,
       mode: 'cart', // 购物车或立即购买
       imgSrcRegex: /<img[^>]+src="([^">]+)"/g, // 匹配接口数据html中的src图
       imgSrcArray: [], // 商品详细介绍长图
       goodsDetailObj: {}, // 商品说明
       goodsCommentArray: {}, // 商品评价
+      goodsSkuId: 0, // 商品规格id
       images: [], // 商品轮播介绍图
-      current: 0,
+      current: 0, // 轮播图当前索引
+      cartTotal: 0, // 购物车内商品总数
       defaultAvatar: 'https://ali-4rozen-oss.oss-cn-guangzhou.aliyuncs.com/coding/202408301648039.png'
     }
   },
@@ -183,7 +187,7 @@ export default {
       this.mode = 'buy'
     },
     // 加入购物车判断登录状态
-    addCart () {
+    async addCart () {
       // console.log(this.$store.getters.token)
       if (!this.$store.getters.token) {
         // 说明没有token，没有token就需要提示登录
@@ -191,19 +195,26 @@ export default {
           message: '当前操作需要登录后才能进行哦',
           confirmButtonText: '去登录',
           cancelButtonText: '再逛逛'
-        }).then(() => {
-          // 说明点击了去登录，需要带上backUrl
-          this.$router.replace({
-            path: '/login',
-            query: {
-              backUrl: this.$route.fullPath // 带上当前页面的全路径（包括查询参数）
-            }
-          })
         })
+          .then(() => {
+            // 说明点击了去登录，需要带上backUrl
+            this.$router.replace({
+              path: '/login',
+              query: {
+                backUrl: this.$route.fullPath // 带上当前页面的全路径（包括查询参数）
+              }
+            })
+          })
           .catch(() => {
             // 说明点击了再逛逛，不做任何操作
           })
       }
+
+      // 说明有token，可以直接加入购物车
+      const { data } = await addCart(this.detailId, this.addCount, this.goodsSkuId)
+      this.cartTotal = data.cartTotal
+      this.$toast('加入购物车成功！')
+      this.showPannel = false // 关闭弹层
     }
   }
 }
