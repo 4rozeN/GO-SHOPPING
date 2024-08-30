@@ -2,7 +2,7 @@
   <div class="search">
     <van-nav-bar title="商品搜索" left-arrow @click-left="$router.go(-1)" />
 
-    <van-search v-model="search" @search="goSearch(search)" show-action placeholder="请输入搜索关键词" clearable>
+    <van-search v-model="search" @search="goSearch(search)" show-action placeholder="请输入搜索关键词" clearable autofocus>
       <template #action>
         <div @click="goSearch(search)">搜索</div>
       </template>
@@ -29,6 +29,8 @@ export default {
   data () {
     return {
       search: '',
+      clearable: true,
+      autofocus: true,
       historyList: getHistory()
     }
   },
