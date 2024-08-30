@@ -61,7 +61,7 @@ export default {
   },
   async created () {
     const { data: { pageData } } = await getHomeData()
-    console.log(pageData)
+    // console.log(pageData)
     this.bannerList = pageData.items[1].data // 获取轮播图数据
     this.navList = pageData.items[3].data // 获取导航组数据
     this.prodsList = pageData.items[6].data // 获取商品组数据
