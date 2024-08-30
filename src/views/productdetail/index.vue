@@ -40,7 +40,7 @@
     <div class="comment">
       <div class="comment-title">
         <div class="left">商品评价 ({{ goodsCommentArray.length }}条)</div>
-        <div class="right" @click="$router.push(`/evaluation?id=${detailId}`)">查看更多 <van-icon name="arrow" /> </div>
+        <div class="right" @click="$router.push(`/evaluation/${detailId}`)">查看更多 <van-icon name="arrow" /> </div>
       </div>
       <div class="comment-list">
         <div class="comment-item" v-for="(item, index) in goodsCommentArray" :key="item.comment_id">

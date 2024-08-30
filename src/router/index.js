@@ -12,7 +12,8 @@ import Category from '@/views/layout/category'
 import Cart from '@/views/layout/cart'
 import User from '@/views/layout/user'
 import store from '@/store'
-import EvaluationDetail from '@/views/productdetail/evaluation'
+import GoodsEvaluation from '@/views/productdetail/evaluation'
+import NotFound from '@/views/404'
 
 Vue.use(VueRouter)
 
@@ -34,13 +35,11 @@ const routes = [
   { path: '/myorder', component: myorder },
   { path: '/pay', component: Pay },
   // 配置动态商品id，用于确认将来是哪个商品详情页
-  {
-    path: '/productdetail/:id',
-    component: ProductDetail,
-    children: [
-      { path: '/evaluation', component: EvaluationDetail }
-    ]
-  }
+  { path: '/productdetail/:id', component: ProductDetail },
+  { path: '/evaluation/:id', component: GoodsEvaluation },
+
+  // 404页面
+  { path: '*', component: NotFound }
 ]
 
 const router = new VueRouter({
