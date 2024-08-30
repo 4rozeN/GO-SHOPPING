@@ -16,13 +16,13 @@
     <div class="info">
       <div class="title">
         <div class="price">
-          <span class="now">￥{{ goodsObj.goods_price_min }}</span>
-          <span class="oldprice">￥{{ goodsObj.goods_price_max }}</span>
+          <span class="now">￥{{ goodsDetailObj.goods_price_min }}</span>
+          <span class="oldprice">￥{{ goodsDetailObj.goods_price_max }}</span>
         </div>
-        <div class="sellcount">已售{{ goodsObj.goods_sales }}件</div>
+        <div class="sellcount">已售{{ goodsDetailObj.goods_sales }}件</div>
       </div>
       <div class="msg text-ellipsis-2">
-        {{ goodsObj.goods_name }}
+        {{ goodsDetailObj.goods_name }}
       </div>
 
       <div class="service">
@@ -39,32 +39,29 @@
     <!-- 商品评价 -->
     <div class="comment">
       <div class="comment-title">
-        <div class="left">商品评价 (5条)</div>
-        <div class="right">查看更多 <van-icon name="arrow" /> </div>
+        <div class="left">商品评价 ({{ goodsCommentArray.length }}条)</div>
+        <div class="right" @click="$router.push(`/evaluation?id=${detailId}`)">查看更多 <van-icon name="arrow" /> </div>
       </div>
       <div class="comment-list">
-        <div class="comment-item" v-for="item in 3" :key="item">
-          <div class="top">
-            <img src="http://cba.itlike.com/public/uploads/10001/20230321/a0db9adb2e666a65bc8dd133fbed7834.png" alt="">
-            <div class="name">神雕大侠</div>
-            <van-rate :size="16" :value="5" color="#ffd21e" void-icon="star" void-color="#eee"/>
+        <div class="comment-item" v-for="(item, index) in goodsCommentArray" :key="item.comment_id">
+          <div class="top" v-if="index < 3">
+            <img :src="item.user.avatar_url ? item.user.avatar_url : defaultAvatar" alt="">
+            <div class="name">{{item.user.nick_name}}</div>
+            <van-rate :size="16" :value="item.score" color="#ffd21e" void-icon="star" void-color="#eee"/>
           </div>
-          <div class="content">
-            质量很不错 挺喜欢的
+          <div class="content" v-if="index < 3">
+            {{item.content}}
           </div>
-          <div class="time">
-            2023-03-21 15:01:35
+          <div class="time" v-if="index < 3">
+            {{item.create_time}}
           </div>
         </div>
       </div>
     </div>
 
     <!-- 商品描述 -->
-    <div class="desc">
-      <img src="https://uimgproxy.suning.cn/uimg1/sop/commodity/kHgx21fZMWwqirkMhawkAw.jpg" alt="">
-      <img src="https://uimgproxy.suning.cn/uimg1/sop/commodity/0rRMmncfF0kGjuK5cvLolg.jpg" alt="">
-      <img src="https://uimgproxy.suning.cn/uimg1/sop/commodity/2P04A4Jn0HKxbKYSHc17kw.jpg" alt="">
-      <img src="https://uimgproxy.suning.cn/uimg1/sop/commodity/MT4k-mPd0veQXWPPO5yTIw.jpg" alt="">
+    <div class="desc" v-for="pic in imgSrcArray" :key="pic">
+      <img :src="pic" alt="">
     </div>
 
     <!-- 底部 -->
@@ -84,7 +81,7 @@
 </template>
 
 <script>
-import { getGoodsDetail } from '@/api/goodsDetail'
+import { getGoodsDetail, getGoodsCommentDetail } from '@/api/goodsDetail'
 
 export default {
   name: 'ProDetail',
@@ -94,18 +91,43 @@ export default {
     }
   },
   async created () {
+    // 获取商品详情-说明部分
     const goodsId = this.detailId
     const res = await getGoodsDetail(goodsId)
     // console.log(res)
-    this.goodsObj = res.data.detail
-    // console.log(this.goodsObj)
-    this.images = this.goodsObj.goods_images
+    this.goodsDetailObj = res.data.detail
+    // console.log(this.goodsDetailObj.content)
+    this.images = this.goodsDetailObj.goods_images
+
+    // 获取商品详情-评价部分
+    const commentRes = await getGoodsCommentDetail({
+      scoreType: 10, // 默认抓取好评
+      goodsId: goodsId,
+      page: 1
+    })
+    this.goodsCommentArray = commentRes.data.list.data
+
+    // 正则匹配得到商品详细介绍长图
+    const htmlString = this.goodsDetailObj.content
+    const srcArray = []
+    const regex = /<img\s+[^>]*src="([^"]*)"/g
+
+    let match
+    while ((match = regex.exec(htmlString)) !== null) {
+      srcArray.push(match[1]) // 将匹配到的 src URL 添加到数组中
+    }
+    this.imgSrcArray = srcArray
+    // console.log(this.imgSrcArray) // 输出结果数组
   },
   data () {
     return {
-      goodsObj: {},
-      images: [],
-      current: 0
+      imgSrcRegex: /<img[^>]+src="([^">]+)"/g, // 匹配接口数据html中的src图
+      imgSrcArray: [], // 商品详细介绍长图
+      goodsDetailObj: {}, // 商品说明
+      goodsCommentArray: {}, // 商品评价
+      images: [], // 商品轮播介绍图
+      current: 0,
+      defaultAvatar: 'https://ali-4rozen-oss.oss-cn-guangzhou.aliyuncs.com/coding/202408301648039.png'
     }
   },
   methods: {
@@ -215,6 +237,12 @@ export default {
       .name {
         margin: 0 10px;
       }
+    }
+    .content {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 100%; /* 或者你希望的宽度 */
     }
     .time {
       color: #999;
