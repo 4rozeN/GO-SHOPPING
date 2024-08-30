@@ -74,17 +74,51 @@
         <van-icon name="shopping-cart-o" />
         <span>购物车</span>
       </div>
-      <div class="btn-add">加入购物车</div>
-      <div class="btn-buy">立刻购买</div>
+      <div class="btn-add" @click="add">加入购物车</div>
+      <div class="btn-buy" @click="buyNow">立刻购买</div>
     </div>
+
+    <!-- 弹层 -->
+    <van-action-sheet v-model="showPannel" :title="mode === 'cart' ? '加入购物车' : '立刻购买'">
+      <div class="product">
+        <div class="product-title">
+          <div class="left">
+            <img :src="goodsDetailObj.goods_image" alt="">
+          </div>
+          <div class="right">
+            <div class="price">
+              <span>¥</span>
+              <span class="nowprice">{{ goodsDetailObj.goods_price_min }}</span>
+            </div>
+            <div class="count">
+              <span>库存</span>
+              <span>{{ goodsDetailObj.stock_total }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="num-box">
+          <span>数量</span>
+          <CountBox v-model="addCount"></CountBox>
+        </div>
+        <!-- 有库存才显示可购买 -->
+        <div class="showbtn" v-if="goodsDetailObj.stock_total > 0">
+          <div class="btn" v-if="this.mode === 'cart'" @click="addCart">加入购物车</div>
+          <div class="btn now" v-else>立刻购买</div>
+        </div>
+        <div class="btn-none" v-else>该商品已抢完</div>
+      </div>
+    </van-action-sheet>
   </div>
 </template>
 
 <script>
 import { getGoodsDetail, getGoodsCommentDetail } from '@/api/goodsDetail'
-
+import CountBox from '@/components/CountBox.vue'
 export default {
   name: 'ProDetail',
+  components: {
+    CountBox
+  },
   computed: {
     detailId () {
       return this.$route.params.id
@@ -96,7 +130,7 @@ export default {
     const res = await getGoodsDetail(goodsId)
     // console.log(res)
     this.goodsDetailObj = res.data.detail
-    // console.log(this.goodsDetailObj.content)
+    // console.log(this.goodsDetailObj)
     this.images = this.goodsDetailObj.goods_images
 
     // 获取商品详情-评价部分
@@ -121,6 +155,9 @@ export default {
   },
   data () {
     return {
+      addCount: 1, // 加入购物车数量
+      showPannel: false,
+      mode: 'cart', // 购物车或立即购买
       imgSrcRegex: /<img[^>]+src="([^">]+)"/g, // 匹配接口数据html中的src图
       imgSrcArray: [], // 商品详细介绍长图
       goodsDetailObj: {}, // 商品说明
@@ -131,8 +168,42 @@ export default {
     }
   },
   methods: {
+    // 轮播图切换
     onChange (index) {
       this.current = index
+    },
+    // 设置弹层按钮为加入购物车
+    add () {
+      this.showPannel = true
+      this.mode = 'cart'
+    },
+    // 设置弹层按钮为立即购买
+    buyNow () {
+      this.showPannel = true
+      this.mode = 'buy'
+    },
+    // 加入购物车判断登录状态
+    addCart () {
+      // console.log(this.$store.getters.token)
+      if (!this.$store.getters.token) {
+        // 说明没有token，没有token就需要提示登录
+        this.$dialog.confirm({
+          message: '当前操作需要登录后才能进行哦',
+          confirmButtonText: '去登录',
+          cancelButtonText: '再逛逛'
+        }).then(() => {
+          // 说明点击了去登录，需要带上backUrl
+          this.$router.replace({
+            path: '/login',
+            query: {
+              backUrl: this.$route.fullPath // 带上当前页面的全路径（包括查询参数）
+            }
+          })
+        })
+          .catch(() => {
+            // 说明点击了再逛逛，不做任何操作
+          })
+      }
     }
   }
 }
@@ -289,5 +360,54 @@ export default {
 
 .tips {
   padding: 10px;
+}
+
+// 弹层样式
+.product {
+  .product-title {
+    display: flex;
+    .left {
+      img {
+        width: 90px;
+        height: 90px;
+      }
+      margin: 10px;
+    }
+    .right {
+      flex: 1;
+      padding: 10px;
+      .price {
+        font-size: 14px;
+        color: #fe560a;
+        .nowprice {
+          font-size: 24px;
+          margin: 0 5px;
+        }
+      }
+    }
+  }
+
+  .num-box {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    align-items: center;
+  }
+
+  .btn, .btn-none {
+    height: 40px;
+    line-height: 40px;
+    margin: 20px;
+    border-radius: 20px;
+    text-align: center;
+    color: rgb(255, 255, 255);
+    background-color: rgb(255, 148, 2);
+  }
+  .btn.now {
+    background-color: #fe5630;
+  }
+  .btn-none {
+    background-color: #cccccc;
+  }
 }
 </style>

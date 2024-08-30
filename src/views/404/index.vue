@@ -5,14 +5,30 @@
       <h1 class="title">404</h1>
       <p class="subtitle">Page Not Found</p>
       <p class="description">Sorry, the page you are looking for does not exist.</p>
-      <router-link to="/" class="home-link">Go to Home Page</router-link>
+      <button class="home-link" @click="No">Go to Home Page</button>
     </div>
   </div>
 </template>
 
 <script>
+import { Toast } from 'vant'
 export default {
-  name: 'NotFound'
+  name: 'NotFound',
+  async created () {
+    // 延时5秒后跳转到首页
+    await new Promise((resolve) => setTimeout(resolve, 5000))
+    this.$router.push('/home')
+  },
+  data () {
+    return {
+      // count: 5
+    }
+  },
+  methods: {
+    No () {
+      Toast('不能从这一侧打开')
+    }
+  }
 }
 </script>
 

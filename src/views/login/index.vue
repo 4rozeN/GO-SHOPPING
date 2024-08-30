@@ -120,7 +120,10 @@ export default {
       if (res.status === 200) {
         Toast('登录成功')
         this.$store.commit('User/setUserInfo', res.data)
-        this.$router.push('/home')
+
+        // 判断是否是被拦截跳转到登录(是否有携带backUrl参数)
+        const url = this.$route.query.backUrl || '/'
+        this.$router.replace(url)
       } else {
         Toast('登录失败，请检查手机号和验证码是否正确')
       }

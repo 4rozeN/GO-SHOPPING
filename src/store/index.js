@@ -9,7 +9,11 @@ export default new Vuex.Store({
     return {
     }
   },
+  // getters用于获取state中的数据
   getters: {
+    token (state) {
+      return state.User.userInfo.token
+    }
   },
   mutations: {
   },
