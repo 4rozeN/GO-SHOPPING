@@ -12,6 +12,20 @@ export default {
     // 提供方法可以设置购物车列表
     setCartList (state, newCartList) {
       state.cartList = newCartList
+    },
+    toggleChecked (state, id) {
+      // 遍历购物车列表，找到对应id的商品，修改其选中状态
+      state.cartList.forEach(item => {
+        if (item.goods_id === id) {
+          item.isChecked = !item.isChecked
+        }
+      })
+    },
+    allToggle (state, flag) {
+      // 遍历购物车列表，修改所有商品的选中状态
+      state.cartList.forEach(item => {
+        item.isChecked = flag
+      })
     }
   },
   actions: {
@@ -44,6 +58,11 @@ export default {
     selectedPrice (state, getters) {
       // toFixed(2) 保留两位小数
       return Array.isArray(getters.selectedCartList) ? getters.selectedCartList.reduce((sum, item, index) => sum + item.goods_num * item.goods.goods_price_min, 0).toFixed(2) : 0
+    },
+    // 是否全选
+    isAllChecked (state) {
+      // every返回true，说明数组中每一项都为true，否则为false
+      return state.cartList.every(item => item.isChecked)
     }
   }
 }
