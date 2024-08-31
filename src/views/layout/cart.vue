@@ -1,47 +1,55 @@
 <template>
   <div class="cart">
     <van-nav-bar title="购物车" fixed />
-    <!-- 购物车开头 -->
-    <div class="cart-title">
-      <span class="all">共<i>{{ countCartTotal }}</i>件商品</span>
-      <span class="edit" @click="isEdit = !isEdit">
-        <van-icon name="edit" />
-        编辑
-      </span>
-    </div>
+    <!-- 判断登录，且购物车列表不为空才渲染 -->
+    <div v-if="isLogin && cartList.length > 0">
+      <!-- 购物车开头 -->
+      <div class="cart-title">
+        <span class="all">共<i>{{ countCartTotal }}</i>件商品</span>
+        <span class="edit" @click="isEdit = !isEdit">
+          <van-icon name="edit" />
+          编辑
+        </span>
+      </div>
 
-    <!-- 购物车列表 -->
-    <div class="cart-list">
-      <div class="cart-item" v-for="item in cartList" :key="item.goods_id" @click="$router.push(`/productdetail/${item.goods_id}`)">
-        <van-checkbox @click="toggleChecked(item.goods_id)" :value="item.isChecked"></van-checkbox>
-        <div class="show">
-          <img :src="item.goods.goods_image" alt="">
+      <!-- 购物车列表 -->
+      <div class="cart-list">
+        <div class="cart-item" v-for="item in cartList" :key="item.goods_id" @click="$router.push(`/productdetail/${item.goods_id}`)">
+          <van-checkbox @click="toggleChecked(item.goods_id)" :value="item.isChecked"></van-checkbox>
+          <div class="show">
+            <img :src="item.goods.goods_image" alt="">
+          </div>
+          <div class="info">
+            <span class="tit text-ellipsis-2">{{ item.goods.goods_name }}</span>
+            <span class="bottom">
+              <div class="price">¥ <span>{{ item.goods.goods_price_min }}</span></div>
+              <CountBox @input="changeCount(item.goods_id, $event, item.goods_sku_id)" :value="item.goods_num"></CountBox>
+            </span>
+          </div>
         </div>
-        <div class="info">
-          <span class="tit text-ellipsis-2">{{ item.goods.goods_name }}</span>
-          <span class="bottom">
-            <div class="price">¥ <span>{{ item.goods.goods_price_min }}</span></div>
-            <CountBox @input="changeCount(item.goods_id, $event, item.goods_sku_id)" :value="item.goods_num"></CountBox>
-          </span>
+      </div>
+
+      <div class="footer-fixed">
+        <div  class="all-check">
+          <van-checkbox @click="allToggle" :value="isAllChecked" icon-size="18"></van-checkbox>
+          全选
+        </div>
+
+        <div class="all-total">
+          <div class="price">
+            <span>合计：</span>
+            <span>¥ <i class="totalPrice">{{selectedPrice}}</i></span>
+          </div>
+          <div v-if="!isEdit" class="goPay" @click="goPay" :class="{disabled: selectedCartCount === 0}">结算({{selectedCartCount}})</div>
+          <div v-else @click="delSelectedCart" class="delete" :class="{disabled: selectedCartCount === 0}">删除</div>
         </div>
       </div>
     </div>
+    <!-- 未登录或购物车列表为空时渲染提示页面 -->
+    <van-empty v-else description="空空如也，快去逛逛吧~">
+      <van-button round type="danger" class="bottom-button" @click="$router.push('/home')">去逛逛</van-button>
+    </van-empty>
 
-    <div class="footer-fixed">
-      <div  class="all-check">
-        <van-checkbox @click="allToggle" :value="isAllChecked" icon-size="18"></van-checkbox>
-        全选
-      </div>
-
-      <div class="all-total">
-        <div class="price">
-          <span>合计：</span>
-          <span>¥ <i class="totalPrice">{{selectedPrice}}</i></span>
-        </div>
-        <div v-if="!isEdit" class="goPay" @click="goPay" :class="{disabled: selectedCartCount === 0}">结算({{selectedCartCount}})</div>
-        <div v-else @click="delSelectedCart" class="delete" :class="{disabled: selectedCartCount === 0}">删除</div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -52,13 +60,16 @@ export default {
   name: 'CartPage',
   computed: {
     ...mapState('Cart', ['cartList']),
-    ...mapGetters('Cart', ['countCartTotal', 'selectedCartList', 'selectedCartCount', 'selectedPrice', 'isAllChecked'])
+    ...mapGetters('Cart', ['countCartTotal', 'selectedCartList', 'selectedCartCount', 'selectedPrice', 'isAllChecked']),
+    isLogin () {
+      return this.$store.getters.token
+    }
   },
   created () {
     // const test = this.countCartTotal
     // console.log(test)
     // 判断是否登录
-    if (this.$store.getters.token) {
+    if (this.isLogin) {
       // 获取购物车数据
       this.$store.dispatch('Cart/getCartAction')
     }
@@ -251,5 +262,10 @@ export default {
     }
   }
 
+}
+
+.bottom-button {
+    width: 160px;
+    height: 40px;
 }
 </style>

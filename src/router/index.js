@@ -47,7 +47,7 @@ const router = new VueRouter({
 })
 
 // 定义数组存储需要登录才能访问的路由
-const authNeedRouters = ['/myorder', '/pay', '/productdetail/:id']
+const authNeedRouters = ['/myorder', '/pay']
 
 // 创建全局路由前置守卫
 router.beforeEach((to, from, next) => {

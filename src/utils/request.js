@@ -38,7 +38,7 @@ instance.interceptors.response.use(function (response) {
   // 对响应数据做点什么 (默认axios会对响应多包装一层data，所以这里需要取出data)
   const res = response.data
   if (res.status !== 200) {
-    Toast(res.message)
+    Toast(res.message) // 错误提示，上线得注释掉
     return Promise.reject(res.message)
   } else {
     // 关闭Toast提示
