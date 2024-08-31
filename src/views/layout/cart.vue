@@ -46,13 +46,15 @@
 </template>
 
 <script>
-import { getCartList } from '@/api/cart'
 import CountBox from '@/components/CountBox'
 export default {
   name: 'CartPage',
-  async created () {
-    const res = await getCartList()
-    console.log(res)
+  created () {
+    // 判断是否登录
+    if (this.$store.getters.token) {
+      // 获取购物车数据
+      this.$store.dispatch('Cart/getCartAction')
+    }
   },
   components: {
     CountBox
