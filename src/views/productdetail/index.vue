@@ -113,7 +113,7 @@
 
 <script>
 import { getGoodsDetail, getGoodsCommentDetail } from '@/api/goodsDetail'
-import { addCart } from '@/api/cart'
+import { mapGetters, mapActions } from 'vuex'
 import CountBox from '@/components/CountBox.vue'
 export default {
   name: 'ProDetail',
@@ -121,6 +121,8 @@ export default {
     CountBox
   },
   computed: {
+    ...mapGetters('Cart', ['countCartTotal']),
+    ...mapActions('Cart', ['getCartAction']),
     detailId () {
       return this.$route.params.id
     }
@@ -154,6 +156,12 @@ export default {
     }
     this.imgSrcArray = srcArray
     // console.log(this.imgSrcArray) // 输出结果数组
+
+    // 异步获取购物车列表
+    await this.getCartAction
+    // 获取购物车商品总数
+    this.cartTotal = this.countCartTotal
+    // console.log(this.cartTotal)
   },
   data () {
     return {
@@ -211,10 +219,22 @@ export default {
       }
 
       // 说明有token，可以直接加入购物车
-      const { data } = await addCart(this.detailId, this.addCount, this.goodsSkuId)
-      this.cartTotal = data.cartTotal
+      const obj = {
+        goodsId: this.detailId,
+        goodsNum: this.addCount,
+        goodsSkuId: this.goodsSkuId
+      }
+      this.$store.dispatch('Cart/addCartAction', obj)
+      // 获取购物车商品总数
+      this.cartTotal = this.countCartTotal
       this.$toast('加入购物车成功！')
       this.showPannel = false // 关闭弹层
+    }
+  },
+  watch: {
+    // 监听 countCartTotal 的变化，自动更新 cartTotal
+    countCartTotal (newVal) {
+      this.cartTotal = newVal
     }
   }
 }

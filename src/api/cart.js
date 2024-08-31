@@ -25,3 +25,10 @@ export const updateCart = (obj) => {
     goodsSkuId
   })
 }
+
+// 删除购物车商品
+export const deleteSelected = (cartIds) => { // cartIds: 要删除的商品id数组
+  return request.post('/cart/clear', {
+    cartIds
+  })
+}

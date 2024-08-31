@@ -12,7 +12,7 @@
 
     <!-- 购物车列表 -->
     <div class="cart-list">
-      <div class="cart-item" v-for="item in cartList" :key="item.goods_id">
+      <div class="cart-item" v-for="item in cartList" :key="item.goods_id" @click="$router.push(`/productdetail/${item.goods_id}`)">
         <van-checkbox @click="toggleChecked(item.goods_id)" :value="item.isChecked"></van-checkbox>
         <div class="show">
           <img :src="item.goods.goods_image" alt="">
@@ -39,7 +39,7 @@
           <span>¥ <i class="totalPrice">{{selectedPrice}}</i></span>
         </div>
         <div v-if="!isEdit" class="goPay" @click="goPay" :class="{disabled: selectedCartCount === 0}">结算({{selectedCartCount}})</div>
-        <div v-else class="delete" :class="{disabled: selectedCartCount === 0}">删除</div>
+        <div v-else @click="delSelectedCart" class="delete" :class="{disabled: selectedCartCount === 0}">删除</div>
       </div>
     </div>
   </div>
@@ -55,6 +55,8 @@ export default {
     ...mapGetters('Cart', ['countCartTotal', 'selectedCartList', 'selectedCartCount', 'selectedPrice', 'isAllChecked'])
   },
   created () {
+    // const test = this.countCartTotal
+    // console.log(test)
     // 判断是否登录
     if (this.$store.getters.token) {
       // 获取购物车数据
@@ -86,6 +88,12 @@ export default {
       this.$store.dispatch('Cart/syncCartAction')
 
       // 触发真正的结算
+    },
+    delSelectedCart () {
+      // 删除选中的购物车商品
+      this.$store.dispatch('Cart/delSelCartA')
+      // 删除完成之后退出编辑状态
+      this.isEdit = false
     }
   },
   components: {
@@ -101,6 +109,10 @@ export default {
         this.$store.commit('Cart/allToggle', true)
       }
     }
+  },
+  destroyed () {
+    // 页面销毁时，立刻调用syncCartAction进行数据同步
+    this.$store.dispatch('Cart/syncCartAction')
   }
 }
 </script>

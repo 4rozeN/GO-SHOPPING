@@ -1,4 +1,5 @@
-import { getCartList, updateCart } from '@/api/cart'
+import { getCartList, updateCart, deleteSelected, addCart } from '@/api/cart'
+import { Toast } from 'vant'
 
 export default {
   namespaced: true,
@@ -13,6 +14,7 @@ export default {
     setCartList (state, newCartList) {
       state.cartList = newCartList
     },
+    // 修改商品选中状态
     toggleChecked (state, id) {
       // 遍历购物车列表，找到对应id的商品，修改其选中状态
       state.cartList.forEach(item => {
@@ -21,12 +23,14 @@ export default {
         }
       })
     },
+    // 全选和反选
     allToggle (state, flag) {
       // 遍历购物车列表，修改所有商品的选中状态
       state.cartList.forEach(item => {
         item.isChecked = flag
       })
     },
+    // 改变商品数量
     changeCount (state, obj) {
       // 遍历购物车列表，找到对应id的商品，修改其数量
       const { goodsId, goodsNum, goodsSkuId } = obj
@@ -38,6 +42,21 @@ export default {
     }
   },
   actions: {
+    // 添加商品到购物车
+    async addCartAction (context, obj) {
+      // 先判断是否已经存在该商品，如果存在，则只修改商品数量
+      const { goodsId, goodsNum, goodsSkuId } = obj
+      context.state.cartList.forEach(item => {
+        if (item.goods_id === goodsId && item.goods_sku_id === goodsSkuId) {
+          item.goods_num += goodsNum
+        }
+      })
+      // 如果不存在，则添加到购物车列表
+      await addCart(goodsId, goodsNum, goodsSkuId)
+      await context.dispatch('getCartAction') // 重新拉取购物车信息
+      Toast('添加成功')
+    },
+
     // 异步获取购物车列表
     async getCartAction (context) {
       const { data } = await getCartList()
@@ -49,7 +68,7 @@ export default {
       context.commit('setCartList', data.list)
     },
 
-    // 将本地购物车列表同步到服务器（结算时优先调用）
+    // 将本地购物车列表同步到服务器（结算或者离开购物车页面立刻同步）
     async syncCartAction (context) {
       // 接口只接受三个参数：goodsId、goodsNum、goodsSkuId，所以需要遍历本地购物车列表，将选中的商品拆分为三个参数
       const paramsObj = {}
@@ -61,8 +80,19 @@ export default {
           updateCart(paramsObj)
         }
       })
-      // 打印console提示，显示本地提交同步的参数对象
-      console.log(paramsObj)
+      // console.log(paramsObj)
+    },
+
+    // 删除选中的商品
+    async delSelCartA (context) {
+      // 获取选中的商品id然后进行删除
+      const ids = context.getters.selectedCartList.map(item => item.id)
+      // console.log(ids)
+      deleteSelected(ids)
+      Toast('删除成功')
+
+      // 删除后重新拉取购物车数据
+      context.dispatch('getCartAction')
     }
   },
   getters: {
