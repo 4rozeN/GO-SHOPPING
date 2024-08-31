@@ -99,6 +99,7 @@ export default {
       this.$store.dispatch('Cart/syncCartAction')
 
       // 触发真正的结算
+      this.$router.push('/pay')
     },
     delSelectedCart () {
       // 删除选中的购物车商品

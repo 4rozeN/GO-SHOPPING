@@ -1519,6 +1519,11 @@
   dependencies:
     "@types/node" "*"
 
+"@vant/area-data@^1.5.2":
+  version "1.5.2"
+  resolved "https://registry.npmmirror.com/@vant/area-data/-/area-data-1.5.2.tgz#d2bed822a86ee92f7e28f07f16834929b38a5fba"
+  integrity sha512-Gtxgt6Rjgopt6234ANpO0bBsSwtjZ23lBlVDHIy8Mi2NJqyoj1vgVWY0dri8/2LCZAWzQ6EnwRrUVViUZ0cvMA==
+
 "@vant/icons@^3.0.2":
   version "3.0.2"
   resolved "https://registry.npmmirror.com/@vant/icons/-/icons-3.0.2.tgz#87f2dd74f0071d305b610d29f9442b89d346d05e"

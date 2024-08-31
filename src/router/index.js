@@ -13,6 +13,8 @@ import Cart from '@/views/layout/cart'
 import User from '@/views/layout/user'
 import store from '@/store'
 import GoodsEvaluation from '@/views/productdetail/evaluation'
+import Address from '@/views/address/index.vue'
+import AddressEdit from '@/views/address/edit.vue'
 import NotFound from '@/views/404'
 
 Vue.use(VueRouter)
@@ -37,6 +39,8 @@ const routes = [
   // 配置动态商品id，用于确认将来是哪个商品详情页
   { path: '/productdetail/:id', component: ProductDetail },
   { path: '/evaluation/:id', component: GoodsEvaluation },
+  { path: '/address/manage', component: Address },
+  { path: '/address/edit', component: AddressEdit },
 
   // 404页面
   { path: '*', component: NotFound }
@@ -47,7 +51,7 @@ const router = new VueRouter({
 })
 
 // 定义数组存储需要登录才能访问的路由
-const authNeedRouters = ['/myorder', '/pay']
+const authNeedRouters = ['/myorder', '/pay', '/address', '/address/edit', '/address/manage']
 
 // 创建全局路由前置守卫
 router.beforeEach((to, from, next) => {

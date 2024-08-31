@@ -11,14 +11,8 @@
 </template>
 
 <script>
-import { Toast } from 'vant'
 export default {
   name: 'NotFound',
-  async created () {
-    // 延时5秒后跳转到首页
-    await new Promise((resolve) => setTimeout(resolve, 5000))
-    this.$router.push('/home')
-  },
   data () {
     return {
       // count: 5
@@ -26,7 +20,7 @@ export default {
   },
   methods: {
     No () {
-      Toast('不能从这一侧打开')
+      this.$router.replace('/')
     }
   }
 }
