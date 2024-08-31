@@ -68,11 +68,11 @@
     <div class="footer">
       <div class="icon-home">
         <van-icon name="wap-home-o" />
-        <span>首页</span>
+        <span @click="$router.push('/home')">首页</span>
       </div>
       <div class="icon-cart">
         <van-icon :badge="cartTotal || ''" name="shopping-cart-o" />
-        <span>购物车</span>
+        <span @click="$router.push('/cart')">购物车</span>
       </div>
       <div class="btn-add" @click="add">加入购物车</div>
       <div class="btn-buy" @click="buyNow">立刻购买</div>

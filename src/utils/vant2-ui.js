@@ -1,6 +1,6 @@
 // vant2-ui.js按需导入组件
 import Vue from 'vue'
-import { Button, Tabbar, TabbarItem, NavBar, Toast, Search, Swipe, SwipeItem, Grid, GridItem, Icon, Sidebar, SidebarItem, Rate, ActionSheet, Dialog } from 'vant'
+import { Button, Tabbar, TabbarItem, NavBar, Toast, Search, Swipe, SwipeItem, Grid, GridItem, Icon, Sidebar, SidebarItem, Rate, ActionSheet, Dialog, Checkbox, CheckboxGroup } from 'vant'
 
 Vue.use(Tabbar)
 Vue.use(Dialog)
@@ -18,3 +18,5 @@ Vue.use(Sidebar)
 Vue.use(SidebarItem)
 Vue.use(Rate)
 Vue.use(ActionSheet)
+Vue.use(Checkbox)
+Vue.use(CheckboxGroup)
