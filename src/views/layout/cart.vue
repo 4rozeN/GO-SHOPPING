@@ -21,7 +21,7 @@
           <span class="tit text-ellipsis-2">{{ item.goods.goods_name }}</span>
           <span class="bottom">
             <div class="price">¥ <span>{{ item.goods.goods_price_min }}</span></div>
-            <CountBox :value="item.goods_num"></CountBox>
+            <CountBox @input="changeCount(item.goods_id, $event, item.goods_sku_id)" :value="item.goods_num"></CountBox>
           </span>
         </div>
       </div>
@@ -38,7 +38,7 @@
           <span>合计：</span>
           <span>¥ <i class="totalPrice">{{selectedPrice}}</i></span>
         </div>
-        <div v-if="true" class="goPay" :class="{disabled: selectedCartCount === 0}">结算({{selectedCartCount}})</div>
+        <div v-if="true" class="goPay" @click="goPay" :class="{disabled: selectedCartCount === 0}">结算({{selectedCartCount}})</div>
         <div v-else class="delete" :class="{disabled: selectedCartCount === 0}">删除</div>
       </div>
     </div>
@@ -67,6 +67,20 @@ export default {
     },
     allToggle () {
       this.$store.commit('Cart/allToggle', !this.isAllChecked)
+    },
+    changeCount (goodsId, e, goodsSkuId) {
+      const obj = {
+        goodsId: goodsId,
+        goodsNum: e,
+        goodsSkuId: goodsSkuId
+      }
+      this.$store.commit('Cart/changeCount', obj)
+    },
+    goPay () {
+      // 先触发购物车与后台数据的同步
+      this.$store.dispatch('Cart/syncCartAction')
+
+      // 触发真正的结算
     }
   },
   components: {

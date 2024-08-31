@@ -15,3 +15,13 @@ export const addCart = (goodsId, goodsNum, goodsSkuId) => {
 export const getCartList = () => {
   return request.get('/cart/list')
 }
+
+// 更新购物车商品
+export const updateCart = (obj) => {
+  const { goodsId, goodsNum, goodsSkuId } = obj
+  return request.post('/cart/update', {
+    goodsId,
+    goodsNum,
+    goodsSkuId
+  })
+}
