@@ -4,7 +4,7 @@
     <!-- 购物车开头 -->
     <div class="cart-title">
       <span class="all">共<i>{{ countCartTotal }}</i>件商品</span>
-      <span class="edit">
+      <span class="edit" @click="isEdit = !isEdit">
         <van-icon name="edit" />
         编辑
       </span>
@@ -38,7 +38,7 @@
           <span>合计：</span>
           <span>¥ <i class="totalPrice">{{selectedPrice}}</i></span>
         </div>
-        <div v-if="true" class="goPay" @click="goPay" :class="{disabled: selectedCartCount === 0}">结算({{selectedCartCount}})</div>
+        <div v-if="!isEdit" class="goPay" @click="goPay" :class="{disabled: selectedCartCount === 0}">结算({{selectedCartCount}})</div>
         <div v-else class="delete" :class="{disabled: selectedCartCount === 0}">删除</div>
       </div>
     </div>
@@ -59,6 +59,11 @@ export default {
     if (this.$store.getters.token) {
       // 获取购物车数据
       this.$store.dispatch('Cart/getCartAction')
+    }
+  },
+  data () {
+    return {
+      isEdit: false
     }
   },
   methods: {
@@ -85,6 +90,17 @@ export default {
   },
   components: {
     CountBox
+  },
+  watch: {
+    isEdit (val) {
+      if (val) {
+        // 说明进入编辑状态
+        this.$store.commit('Cart/allToggle', false)
+      } else {
+        // 说明退出编辑状态
+        this.$store.commit('Cart/allToggle', true)
+      }
+    }
   }
 }
 </script>

@@ -1,6 +1,7 @@
 <template>
   <div class="count-box">
-    <button @click="handleSub" class="minus">-</button>
+    <!-- value <= 1 时，将-的按钮变灰色，不允许点击 -->
+    <button :disabled="value <= 1" @click="handleSub" class="minus">-</button>
     <input :value="value" @change="handleChange" class="inp" type="text">
     <button @click="handleAdd" class="add">+</button>
   </div>
