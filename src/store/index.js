@@ -3,6 +3,7 @@ import Vuex from 'vuex'
 import User from '@/store/modules/user'
 import Cart from '@/store/modules/cart'
 import Address from '@/store/modules/address'
+import AddressMap from '@/store/modules/addressMap'
 
 Vue.use(Vuex)
 
@@ -24,6 +25,7 @@ export default new Vuex.Store({
   modules: {
     User,
     Cart,
-    Address
+    Address,
+    AddressMap
   }
 })

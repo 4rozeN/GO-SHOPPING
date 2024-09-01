@@ -7,7 +7,11 @@ export const getAddressList = () => {
 
 // 获取某个地址的详情
 export const getAddressDetail = (addressId) => {
-  return request.get('/address/detail', addressId)
+  return request.get('/address/detail', {
+    params: {
+      addressId: addressId
+    }
+  })
 }
 
 // 添加收货地址
@@ -28,9 +32,14 @@ export const addAddress = (dataObj) => {
 export const updateAddress = (dataObj) => {
   // 直接使用dataObj中的数据
   return request.post('/address/edit', {
-    addressId: dataObj.addressId,
+    addressId: dataObj.address_id,
     form: dataObj.form
   })
+}
+
+// 设置默认地址
+export const setDefaultAddress = (addressId) => {
+  return request.post('/address/setDefault', { addressId })
 }
 
 // 删除收货地址
