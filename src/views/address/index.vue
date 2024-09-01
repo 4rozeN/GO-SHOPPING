@@ -15,6 +15,7 @@
         :disabled-list="disabledList"
         :disabled-text="disabledText"
         default-tag-text="默认"
+        @select="onSelect"
         @add="onAdd"
         @edit="onEdit"
       />
@@ -26,7 +27,7 @@
 </template>
 
 <script>
-import { Toast } from 'vant'
+import { Toast, Dialog } from 'vant'
 import { mapActions, mapGetters } from 'vuex'
 
 export default {
@@ -75,17 +76,17 @@ export default {
       console.log('默认地址id：', defaultAddressId)
 
       if (Number(defaultAddressId) !== -1) {
-        // 遍历比对列表每一项的id是否与defaultAddressId相等，找到后返回索引（强等于比较，注意类型）
+        // 遍历比对列表每一项的id是否与defaultAddressId相等，找到后返回索引
         const defaultIndex = this.list.findIndex((item) => Number(item.id) === Number(defaultAddressId))
         if (Number(defaultIndex) !== -1) {
-          // 找到后设置为默认地址
+          // 找到后设置默认地址
           this.list[defaultIndex].isDefault = true
           this.chosenAddressId = Number(defaultAddressId)
         }
       } else {
         // Vuex没有默认地址，则默认选中第一个地址
-        Toast('小主还没有默认地址哦\n快来设置一个吧❤️')
-        console.log('未找到有效的默认地址')
+        // Toast('小主还没有默认地址哦\n快来设置一个吧❤️')
+        // console.log('未找到有效的默认地址')
         this.chosenAddressId = this.list[0].id || ''
       }
       // 设置禁用的地址列表
@@ -100,7 +101,7 @@ export default {
         }))
     } catch (error) {
       // console.error('获取地址列表失败：', error)
-      Toast.fail('获取地址列表失败')
+      Toast('地址为空')
     }
   },
   methods: {
@@ -116,12 +117,26 @@ export default {
       // console.log('codeToname：', this.codeToName(item.province_id))
       return result
     },
+    onSelect (item) {
+      console.log('选择地址id：', this.chosenAddressId)
+      // this.$router.replace(`/pay?adsid=${item.id}`)
+      Dialog.alert({
+        title: '选择确认',
+        message: '您确定选择这个地址吗？',
+        showCancelButton: true
+      }).then(() => {
+        // on close
+        this.$router.replace(`/pay?adsid=${item.id}`)
+      }).catch(() => {
+        // on cancel
+      })
+    },
     onAdd () {
-      this.$router.push('/address/edit?adsid=')
+      this.$router.replace('/address/edit?adsid=')
     },
     onEdit (item) {
       // console.log('跳转到编辑：', item)
-      this.$router.push(`/address/edit?adsid=${item.id}`)
+      this.$router.replace(`/address/edit?adsid=${item.id}`)
     }
   }
 }

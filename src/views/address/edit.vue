@@ -1,7 +1,7 @@
 <template>
   <!-- 可编辑也可以作为添加地址的页面 -->
   <div class="address-list">
-    <van-nav-bar fixed title="地址编辑" left-arrow @click-left="$router.go(-1)" />
+    <van-nav-bar fixed title="地址编辑" left-arrow @click-left="$router.replace('/address/manage')" />
 
     <div class="address-edit">
       <van-address-edit

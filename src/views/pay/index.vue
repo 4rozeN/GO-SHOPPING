@@ -11,7 +11,7 @@
 
       <div class="info" v-if="addressList.length > 0">
         <div class="info-content">
-          <span class="name">{{ chosenAddress.name }}</span>
+          <span class="name">{{ chosenAddress.name }} </span>
           <span class="mobile">{{ chosenAddress.phone }}</span>
         </div>
         <div class="info-address">
@@ -31,31 +31,31 @@
     <!-- 订单明细 -->
     <div class="pay-list">
       <div class="list">
-        <div class="goods-item">
+        <div class="goods-item" v-for="item in cartList" :key="item.id">
             <div class="left">
-              <img src="http://cba.itlike.com/public/uploads/10001/20230321/8f505c6c437fc3d4b4310b57b1567544.jpg" alt="" />
+              <img :src="item.goods.goods_image" alt="" />
             </div>
             <div class="right">
               <p class="tit text-ellipsis-2">
-                 三星手机 SAMSUNG Galaxy S23 8GB+256GB 超视觉夜拍系统 超清夜景 悠雾紫 5G手机 游戏拍照旗舰机s23
+                 {{ item.goods.goods_name }}
               </p>
               <p class="info">
-                <span class="count">x3</span>
-                <span class="price">¥9.99</span>
+                <span class="count">共{{ item.goods_num }}件</span>
+                <span class="price">¥{{item.goods.goods_price_min * item.goods_num}}</span>
               </p>
             </div>
         </div>
       </div>
 
       <div class="flow-num-box">
-        <span>共 12 件商品，合计：</span>
-        <span class="money">￥1219.00</span>
+        <span>共 {{selectedCartCount()}} 件商品，合计：</span>
+        <span class="money">￥{{selectedPrice()}}</span>
       </div>
 
       <div class="pay-detail">
         <div class="pay-cell">
           <span>订单总金额：</span>
-          <span class="red">￥1219.00</span>
+          <span class="red">￥{{selectedPrice()}}</span>
         </div>
 
         <div class="pay-cell">
@@ -88,8 +88,8 @@
 
     <!-- 底部提交 -->
     <div class="footer-fixed">
-      <div class="left">实付款：<span>￥999919</span></div>
-      <div class="tipsbtn">提交订单</div>
+      <div class="left">实付款：<span>￥{{selectedPrice()}}</span></div>
+      <div class="tipsbtn" @click="$router.push('/order/confirm')">提交订单</div>
     </div>
   </div>
 </template>
@@ -103,53 +103,76 @@ export default {
     // 构建地区映射表
     await this.buildReverseMaps()
 
+    // 处理购物车详情展示
+    // 拉取购物车列表
+    await this.getCartAction()
+    this.cartList = this.selectedCartList()
+    console.log('购物车列表：', this.cartList)
+
     // 获取地址列表
     const { list } = await this.getAddressList()
     this.addressList = list
-    // console.log('地址列表：', this.addressList)
+    console.log('地址列表：', this.addressList)
 
     // 从Vuex中获取默认地址的id
     const defaultAddressId = this.getDefaultAddressId()
     console.log('默认地址id：', defaultAddressId)
 
-    if (defaultAddressId !== -1) {
-      // 遍历比对列表每一项的id是否与defaultAddressId相等，找到后返回索引（强等于比较，注意类型）
-      const defaultIndex = this.addressList.findIndex((item) => String(item.address_id) === String(defaultAddressId))
-      // console.log('默认地址索引：', defaultIndex)
-      if (defaultIndex !== -1) {
-        // 找到后将数组数据转对象赋值给chosenAddress属性
-        this.chosenAddress = this.addressList[defaultIndex]
-
-        // 处理地址Code转为Name
-        const regionId = String(this.chosenAddress.region_id)
-        // 调用 getFullAddressInfo 方法
-        this.regionName = await this.fetchFullAddressName(regionId)
+    if (this.addressList.length > 0) {
+      // 如果有地址查询参数?adsid，则说明进行了地址切换
+      console.log('地址切换参数：', this.getadsid)
+      if (this.getadsid) {
+        // chosenAddress被赋值为切换的id的地址
+        const address = this.addressList.find(item => String(item.address_id) === String(this.getadsid))
+        this.chosenAddress = address
+        console.log('切换后的地址：', this.chosenAddress)
       } else {
-        console.log('未找到有效的地址索引')
+        // 如果没有地址切换参数，则说明没有切换地址
+        if (Number(defaultAddressId) !== -1) {
+          // 遍历比对列表每一项的id是否与defaultAddressId相等，找到后返回索引（强等于比较，注意类型）
+          const defaultIndex = this.addressList.findIndex((item) => String(item.address_id) === String(defaultAddressId))
+          // console.log('默认地址索引：', defaultIndex)
+          if (Number(defaultIndex) !== -1) {
+            // 找到后将数组数据转对象赋值给chosenAddress属性
+            this.chosenAddress = this.addressList[defaultIndex]
+
+            // 处理地址Code转为Name
+            const regionId = String(this.chosenAddress.region_id)
+            // 调用 getFullAddressInfo 方法
+            this.regionName = await this.fetchFullAddressName(regionId)
+          } else {
+            console.log('未找到有效的默认地址索引')
+          }
+        } else {
+          // Vuex没有默认地址，则默认选中第一个地址
+          // 设置chosenAddress属性为addressList的第一个地址
+          this.chosenAddress = this.addressList[0]
+          const regionId = String(this.chosenAddress.region_id)
+          this.regionName = await this.fetchFullAddressName(regionId)
+          console.log('无默认地址，展示数据chosenAddress：', this.chosenAddress)
+        }
       }
-    } else if (this.addressList.length > 0) {
-      // Vuex没有默认地址，则默认选中第一个地址
-      // 设置chosenAddress属性为addressList的第一个地址
-      this.chosenAddress = { ...this.addressList[0] }
-      const regionId = String(this.chosenAddress.region_id)
-      this.regionName = await this.fetchFullAddressName(regionId)
-      console.log('无默认地址，展示数据chosenAddress：', this.chosenAddress)
-    } else {
-      // 此处为无地址列表的情况处理
-      console.log('地址列表为空')
     }
   },
   data () {
     return {
       addressList: [], // 地址列表
       chosenAddress: {}, // 被选择进行展示的地址
-      regionName: {} // 将地址Code转为Name
+      regionName: {}, // 将地址Code转为Name
+      cartList: [] // 购物车列表
+    }
+  },
+  computed: {
+    getadsid () {
+      return this.$route.query.adsid
     }
   },
   methods: {
     ...mapActions('Address', ['getAddressList', 'getAddressDetail']),
     ...mapGetters('Address', ['getDefaultAddressId']),
-    ...mapActions('AddressMap', ['buildReverseMaps', 'fetchFullAddressName'])
+    ...mapActions('AddressMap', ['buildReverseMaps', 'fetchFullAddressName']),
+    ...mapActions('Cart', ['getCartAction']),
+    ...mapGetters('Cart', ['selectedCartList', 'selectedCartCount', 'selectedPrice'])
   }
 }
 </script>
