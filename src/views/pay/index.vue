@@ -95,22 +95,38 @@
 </template>
 
 <script>
-import { getAddressList } from '@/api/address'
+import { mapActions } from 'vuex'
 export default {
   name: 'PayIndex',
-  created () {
-    this.getAddressList()
+  async created () {
+    // 获取地址列表
+    const { list } = await this.getAddressList()
+    this.addressList = list
+    console.log('获取地址列表：', this.addressList)
+
+    // 判断Vuex是否存有默认地址id
+    const defaultAddressId = this.$store.state.Address.defaultAddressId
+    console.log('默认地址id：', defaultAddressId)
+    if (defaultAddressId) {
+      // 说明存在，则查询这个默认地址的详情
+      const { data: { detail } } = await this.getAddressDetail(defaultAddressId)
+      // console.log('默认地址详情：', detail)
+      this.chosenAddress = detail
+      console.log('展示地址：', this.chosenAddress)
+    } else {
+      // 说明不存在，则将地址列表的第一个进行展示
+      this.chosenAddress = this.addressList[0]
+      console.log('展示地址：', this.chosenAddress)
+    }
   },
   data () {
     return {
-      addressList: []
+      addressList: [], // 地址列表
+      chosenAddress: {} // 被选择进行展示的地址
     }
   },
   methods: {
-    async getAddressList () {
-      const res = await getAddressList()
-      console.log(res)
-    }
+    ...mapActions('Address', ['getAddressList', 'getAddressDetail'])
   }
 }
 </script>

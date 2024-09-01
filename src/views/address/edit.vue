@@ -12,6 +12,7 @@
         show-search-result
         :search-result="searchResult"
         :area-columns-placeholder="['请选择', '请选择', '请选择']"
+        :detail-maxlength="20"
         @save="onSave"
         @delete="onDelete"
         @change-default="onChangeDefault"
@@ -33,7 +34,7 @@ export default {
       addressInfo: {}, // 初始地址详情对象，若是新建地址则为空对象
       areaList: areaList, // 地区列表
       searchResult: [], // 详细地址搜索结果
-      isDefault: false // 是否为默认地址，新建不可设置默认地址，只有编辑可以
+      checkDefault: false // 默认地址的标识，数据内的isDefault会随着设置按钮而改变，此字段标识数据原始状态
     }
   },
   computed: {
@@ -66,8 +67,19 @@ export default {
         areaCode: String(detail.region_id),
         isDefault: this.isDefault
       }
-      // console.log('addressInfo:', this.addressInfo)
-      this.isDefault = detail.isDefault || false // 记录是否为默认地址
+      // 从Vuex得到默认地址的id
+      const defaultAddressId = this.$store.state.Address.defaultAddressId
+      // 比对当前地址是否为默认地址
+      if (Number(defaultAddressId) === Number(detail.address_id)) {
+        console.log('当前地址为默认地址')
+        this.addressInfo.isDefault = true // 设置默认按钮为打开状态
+        this.checkDefault = true // 为真说明该地址获取的时候就是默认地址
+      } else {
+        // 说明当前地址不是默认地址
+        console.log('当前地址不是默认地址')
+        this.addressInfo.isDefault = false // 设置默认按钮为关闭状态
+        this.checkDefault = false // 为假说明该地址获取的时候不是默认地址
+      }
     } else {
       // 说明是新建地址，不做操作
     }
@@ -140,35 +152,53 @@ export default {
           }
         }
         // console.log('dataObj:', dataObj)
-        // 发送请求
         await this.updateAddress(dataObj)
-        // 成功后返回地址列表
-        if (this.isDefault) {
-          // 如果设置了当前地址为默认地址，则将Vuex的默认地址进行更新
-          this.$store.commit('Address/setDefaultAddressId', this.addressInfo.id)
-          Toast('保存成功')
-          this.$router.replace({ path: '/address/manage' }) // 保存成功后返回地址列表页面
+        Toast('保存成功')
+
+        // 处理默认地址的标识问题
+        if (this.checkDefault) { // 为真说明当前编辑的是默认地址
+          console.log('当前是默认地址，content:', content)
+          console.log('当前是默认地址，this.adressInfo:', this.addressInfo)
+
+          if (content.isDefault !== this.checkDefault) {
+            // 说明用户取消了这个默认地址，需要将Vuex的默认地址id赋值为-1
+            this.$store.commit('Address/setDefaultAddressId', -1)
+          }
+          // 否则什么也不做
         } else {
-          // 没有设置默认地址，则直接返回地址列表页面
-          Toast('保存成功')
-          setTimeout(() => {
-            this.$router.replace({ path: '/address/manage' }) // 保存成功后返回地址列表页面
-          }, 1000)
+          // 说明当前编辑的不是默认地址
+          console.log('当前不是默认地址，content:', content)
+          console.log('当前不是默认地址，this.adressInfo:', this.addressInfo)
+
+          if (content.isDefault !== this.checkDefault) {
+            // 说明用户将当前不是默认地址的地址设置为默认地址
+            this.$store.commit('Address/setDefaultAddressId', this.addressInfo.id)
+          }
+          // 否则什么也不做
         }
+
+        // 处理完成后跳转会地址列表页
+        this.$router.replace({ path: '/address/manage' })
       }
     },
     async onDelete () {
+      // 判断是否删除的是默认地址，如果是，则将Vuex的默认地址id赋值为-1
+      if (this.checkDefault) {
+        this.$store.commit('Address/setDefaultAddressId', -1)
+        console.log('删除默认地址, Vuex的默认地址id:', this.$store.state.Address.defaultAddressId)
+      }
       await this.$store.dispatch('Address/deleteAddress', this.addressInfo.id)
       Toast('删除成功')
       setTimeout(() => {
         this.$router.replace('/address/manage')
       }, 1000)
     },
-    // 切换默认地址
+    // 设置默认地址
     onChangeDefault (val) {
       // console.log(val)
       // 只有编辑才可以设置默认地址
-      this.isDefault = val
+      this.addressInfo.isDefault = val
+      console.log('设置默认地址的按钮被触发, this.addressInfo.isDefault:', this.addressInfo.isDefault)
     }
   }
 }

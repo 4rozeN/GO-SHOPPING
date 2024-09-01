@@ -72,20 +72,20 @@ export default {
 
       // 从Vuex中获取默认地址的id
       const defaultAddressId = this.getDefaultAddressId
-      if (defaultAddressId) {
-        // 转换defaultAddressId类型为数字，避免强等于无法得到正确结果
-        // 遍历比对列表每一项的id是否与Vuex中默认地址的id相同，找到后返回索引
+      console.log('默认地址id：', defaultAddressId)
+
+      if (Number(defaultAddressId) !== -1) {
+        // 遍历比对列表每一项的id是否与defaultAddressId相等，找到后返回索引（强等于比较，注意类型）
         const defaultIndex = this.list.findIndex((item) => Number(item.id) === Number(defaultAddressId))
-        if (defaultIndex) {
-          // 找到后
+        if (Number(defaultIndex) !== -1) {
+          // 找到后设置为默认地址
           this.list[defaultIndex].isDefault = true
-          this.chosenAddressId = defaultAddressId
-        } else {
-          // 没找到，则默认选中第一个地址
-          this.chosenAddressId = this.list[0].id || ''
+          this.chosenAddressId = Number(defaultAddressId)
         }
       } else {
         // Vuex没有默认地址，则默认选中第一个地址
+        Toast('小主还没有默认地址哦\n快来设置一个吧❤️')
+        console.log('未找到有效的默认地址')
         this.chosenAddressId = this.list[0].id || ''
       }
       // 设置禁用的地址列表
@@ -98,15 +98,6 @@ export default {
           address: this.formatAddress(item),
           isDefault: item.is_default || false
         }))
-      // 遍历寻找是否有被设置为默认的地址的id
-      const hasDefault = this.list.some((item) => item.isDefault)
-      if (!hasDefault) {
-        Toast('小主还没有默认地址哦\n快来设置一个吧❤️')
-      } else {
-        // 说明有默认地址，将其设置为选中项
-        const defaultItem = this.list.find((item) => item.isDefault)
-        this.chosenAddressId = defaultItem.id || ''
-      }
     } catch (error) {
       // console.error('获取地址列表失败：', error)
       Toast.fail('获取地址列表失败')
