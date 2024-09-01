@@ -9,18 +9,18 @@
         <van-icon name="logistics" />
       </div>
 
-      <div class="info" v-if="true">
+      <div class="info" v-if="addressList.length > 0">
         <div class="info-content">
-          <span class="name">小红</span>
-          <span class="mobile">13811112222</span>
+          <span class="name">{{ chosenAddress.name }}</span>
+          <span class="mobile">{{ chosenAddress.phone }}</span>
         </div>
         <div class="info-address">
-          江苏省 无锡市 南长街 110号 504
+          {{ regionName.province }} {{ regionName.city }} {{ regionName.county }} {{ chosenAddress.detail }}
         </div>
       </div>
 
       <div class="info" v-else>
-        请选择配送地址
+        还没有地址哦，点击右侧按钮添加吧
       </div>
 
       <div class="right-icon" @click="$router.push('/address/manage')">
@@ -95,38 +95,61 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
+
 export default {
   name: 'PayIndex',
   async created () {
+    // 构建地区映射表
+    await this.buildReverseMaps()
+
     // 获取地址列表
     const { list } = await this.getAddressList()
     this.addressList = list
-    console.log('获取地址列表：', this.addressList)
+    // console.log('地址列表：', this.addressList)
 
-    // 判断Vuex是否存有默认地址id
-    const defaultAddressId = this.$store.state.Address.defaultAddressId
+    // 从Vuex中获取默认地址的id
+    const defaultAddressId = this.getDefaultAddressId()
     console.log('默认地址id：', defaultAddressId)
-    if (defaultAddressId) {
-      // 说明存在，则查询这个默认地址的详情
-      const { data: { detail } } = await this.getAddressDetail(defaultAddressId)
-      // console.log('默认地址详情：', detail)
-      this.chosenAddress = detail
-      console.log('展示地址：', this.chosenAddress)
+
+    if (defaultAddressId !== -1) {
+      // 遍历比对列表每一项的id是否与defaultAddressId相等，找到后返回索引（强等于比较，注意类型）
+      const defaultIndex = this.addressList.findIndex((item) => String(item.address_id) === String(defaultAddressId))
+      // console.log('默认地址索引：', defaultIndex)
+      if (defaultIndex !== -1) {
+        // 找到后将数组数据转对象赋值给chosenAddress属性
+        this.chosenAddress = this.addressList[defaultIndex]
+
+        // 处理地址Code转为Name
+        const regionId = String(this.chosenAddress.region_id)
+        // 调用 getFullAddressInfo 方法
+        this.regionName = await this.fetchFullAddressName(regionId)
+      } else {
+        console.log('未找到有效的地址索引')
+      }
+    } else if (this.addressList.length > 0) {
+      // Vuex没有默认地址，则默认选中第一个地址
+      // 设置chosenAddress属性为addressList的第一个地址
+      this.chosenAddress = { ...this.addressList[0] }
+      const regionId = String(this.chosenAddress.region_id)
+      this.regionName = await this.fetchFullAddressName(regionId)
+      console.log('无默认地址，展示数据chosenAddress：', this.chosenAddress)
     } else {
-      // 说明不存在，则将地址列表的第一个进行展示
-      this.chosenAddress = this.addressList[0]
-      console.log('展示地址：', this.chosenAddress)
+      // 此处为无地址列表的情况处理
+      console.log('地址列表为空')
     }
   },
   data () {
     return {
       addressList: [], // 地址列表
-      chosenAddress: {} // 被选择进行展示的地址
+      chosenAddress: {}, // 被选择进行展示的地址
+      regionName: {} // 将地址Code转为Name
     }
   },
   methods: {
-    ...mapActions('Address', ['getAddressList', 'getAddressDetail'])
+    ...mapActions('Address', ['getAddressList', 'getAddressDetail']),
+    ...mapGetters('Address', ['getDefaultAddressId']),
+    ...mapActions('AddressMap', ['buildReverseMaps', 'fetchFullAddressName'])
   }
 }
 </script>

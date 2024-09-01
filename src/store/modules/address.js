@@ -7,7 +7,7 @@ export default {
     return {
       AddressList: [],
       // 初始化时从 localStorage 中获取默认地址 ID
-      defaultAddressId: localStorage.getItem('defaultAddressId') || ''
+      defaultAddressId: localStorage.getItem('defaultAddressId') || -1
     }
   },
   mutations: {
