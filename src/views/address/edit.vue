@@ -49,7 +49,7 @@ export default {
 
     // 获取要进行编辑的地址id，如果为空则赋值为-1表示为新建地址
     this.adsId = this.getAdsId
-    console.log('adsId:', this.adsId)
+    // console.log('adsId:', this.adsId)
 
     // 如果adsId不等于-1，则进行地址详情的拉取
     if (this.adsId !== -1) {
@@ -66,7 +66,7 @@ export default {
         areaCode: String(detail.region_id),
         isDefault: this.isDefault
       }
-      console.log('addressInfo:', this.addressInfo)
+      // console.log('addressInfo:', this.addressInfo)
       this.isDefault = detail.isDefault || false // 记录是否为默认地址
     } else {
       // 说明是新建地址，不做操作
@@ -114,7 +114,7 @@ export default {
         this.$router.replace({ path: '/address/manage' }) // 保存成功后返回地址列表页面
       } else {
         // 编辑地址
-        console.log('编辑地址的content:', content)
+        // console.log('编辑地址的content:', content)
         this.addressInfo = content
         // 封装对象，用于发送请求
         const dataObj = {
@@ -139,7 +139,7 @@ export default {
             detail: this.addressInfo.addressDetail
           }
         }
-        console.log('dataObj:', dataObj)
+        // console.log('dataObj:', dataObj)
         // 发送请求
         await this.updateAddress(dataObj)
         // 成功后返回地址列表
@@ -151,12 +151,18 @@ export default {
         } else {
           // 没有设置默认地址，则直接返回地址列表页面
           Toast('保存成功')
-          this.$router.replace({ path: '/address/manage' }) // 保存成功后返回地址列表页面
+          setTimeout(() => {
+            this.$router.replace({ path: '/address/manage' }) // 保存成功后返回地址列表页面
+          }, 1000)
         }
       }
     },
-    onDelete () {
+    async onDelete () {
+      await this.$store.dispatch('Address/deleteAddress', this.addressInfo.id)
       Toast('删除成功')
+      setTimeout(() => {
+        this.$router.replace('/address/manage')
+      }, 1000)
     },
     // 切换默认地址
     onChangeDefault (val) {

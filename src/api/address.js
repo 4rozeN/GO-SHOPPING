@@ -16,7 +16,7 @@ export const getAddressDetail = (addressId) => {
 
 // 添加收货地址
 export const addAddress = (dataObj) => {
-  console.log('api_dataObj', dataObj)
+  // console.log('api_dataObj', dataObj)
   // 直接使用dataObj中的数据
   return request.post('/address/add', {
     form: {
@@ -44,5 +44,5 @@ export const setDefaultAddress = (addressId) => {
 
 // 删除收货地址
 export const deleteAddress = (addressId) => {
-  return request.post('/address/remove', addressId)
+  return request.post('/address/remove', { addressId })
 }

@@ -129,7 +129,7 @@ export default {
       this.$router.push('/address/edit?adsid=')
     },
     onEdit (item) {
-      console.log('跳转到编辑：', item)
+      // console.log('跳转到编辑：', item)
       this.$router.push(`/address/edit?adsid=${item.id}`)
     }
   }

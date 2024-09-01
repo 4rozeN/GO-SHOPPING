@@ -33,9 +33,9 @@ export default {
       if (!addressId) {
         throw new Error('Address ID is required')
       }
-      console.log('getAddressDetail被调用，addressId：', addressId)
+      // console.log('getAddressDetail被调用，addressId：', addressId)
       const data = await getAddressDetail(addressId)
-      console.log('getAddressDetail返回的数据：', data)
+      // console.log('getAddressDetail返回的数据：', data)
       return data
     },
 
@@ -73,7 +73,7 @@ export default {
       await deleteAddress(addressId)
 
       // 删除成功后，重新拉取地址列表
-      this.getAddressList()
+      getAddressList()
     }
   },
   getters: {
