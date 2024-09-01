@@ -35,12 +35,12 @@ const routes = [
   { path: '/search', component: Search },
   { path: '/searchlist', component: SearchList },
   { path: '/myorder', component: myorder },
-  { path: '/pay', component: Pay },
+  { path: '/pay', component: Pay, name: 'Pay' },
   // 配置动态商品id，用于确认将来是哪个商品详情页
   { path: '/productdetail/:id', component: ProductDetail },
   { path: '/evaluation/:id', component: GoodsEvaluation },
-  { path: '/address/manage', component: Address },
-  { path: '/address/edit', component: AddressEdit },
+  { path: '/address/manage', component: Address, name: 'AddressM' },
+  { path: '/address/edit', component: AddressEdit, name: 'AddressE' },
 
   // 404页面
   { path: '*', component: NotFound }

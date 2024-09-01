@@ -126,7 +126,13 @@ export default {
         showCancelButton: true
       }).then(() => {
         // on close
-        this.$router.replace(`/pay?adsid=${item.id}`)
+        // this.$router.replace(`/pay?adsid=${item.id}`)
+        this.$router.replace({
+          name: 'Pay', // 使用replace带参数必须使用name，路由配置也必须存在name
+          params: {
+            adsid: item.id
+          }
+        })
       }).catch(() => {
         // on cancel
       })
@@ -136,7 +142,13 @@ export default {
     },
     onEdit (item) {
       // console.log('跳转到编辑：', item)
-      this.$router.replace(`/address/edit?adsid=${item.id}`)
+      // this.$router.replace(`/address/edit?adsid=${item.id}`)
+      this.$router.replace({
+        name: 'AddressE',
+        params: {
+          adsid: item.id
+        }
+      })
     }
   }
 }

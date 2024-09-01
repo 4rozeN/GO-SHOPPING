@@ -23,7 +23,7 @@
         还没有地址哦，点击右侧按钮添加吧
       </div>
 
-      <div class="right-icon" @click="$router.push('/address/manage')">
+      <div class="right-icon" @click="goAddress">
         <van-icon name="arrow" />
       </div>
     </div>
@@ -100,6 +100,7 @@ import { mapActions, mapGetters } from 'vuex'
 export default {
   name: 'PayIndex',
   async created () {
+    console.log('params:', this.$route.params.adsid)
     // 构建地区映射表
     await this.buildReverseMaps()
 
@@ -164,7 +165,7 @@ export default {
   },
   computed: {
     getadsid () {
-      return this.$route.query.adsid
+      return this.$route.params.adsid
     }
   },
   methods: {
@@ -172,7 +173,10 @@ export default {
     ...mapGetters('Address', ['getDefaultAddressId']),
     ...mapActions('AddressMap', ['buildReverseMaps', 'fetchFullAddressName']),
     ...mapActions('Cart', ['getCartAction']),
-    ...mapGetters('Cart', ['selectedCartList', 'selectedCartCount', 'selectedPrice'])
+    ...mapGetters('Cart', ['selectedCartList', 'selectedCartCount', 'selectedPrice']),
+    goAddress () {
+      this.$router.push('/address/manage')
+    }
   }
 }
 </script>

@@ -41,7 +41,7 @@ export default {
     ...mapGetters('AddressMap', ['nameToCode', 'codeToName']),
     // 获取要进行编辑的地址id，如果为空则赋值为-1表示为新建地址
     getAdsId () {
-      return this.$route.query.adsid || -1
+      return this.$route.params.adsid || -1
     }
   },
   async created () {

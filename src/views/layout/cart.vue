@@ -98,7 +98,10 @@ export default {
       // 先触发购物车与后台数据的同步
       this.$store.dispatch('Cart/syncCartAction')
 
-      // 触发真正的结算
+      // 判断是否选中了商品，否则无事发生
+      if (this.selectedCartCount > 0) {
+        // 说明有选中商品
+      }
       this.$router.push('/pay')
     },
     delSelectedCart () {
