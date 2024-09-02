@@ -118,6 +118,10 @@ export default {
     isAllChecked (state) {
       // every返回true，说明数组中每一项都为true，否则为false
       return state.cartList.every(item => item.isChecked)
+    },
+    // 选中的商品id，return形式：101,102,103
+    selectedGoodsId (state, getters) {
+      return getters.selectedCartList.map(item => item.goods_id).join(',')
     }
   }
 }

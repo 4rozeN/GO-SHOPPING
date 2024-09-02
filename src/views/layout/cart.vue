@@ -14,12 +14,12 @@
 
       <!-- 购物车列表 -->
       <div class="cart-list">
-        <div class="cart-item" v-for="item in cartList" :key="item.goods_id" @click="$router.push(`/productdetail/${item.goods_id}`)">
+        <div class="cart-item" v-for="item in cartList" :key="item.goods_id">
           <van-checkbox @click="toggleChecked(item.goods_id)" :value="item.isChecked"></van-checkbox>
           <div class="show">
             <img :src="item.goods.goods_image" alt="">
           </div>
-          <div class="info">
+          <div class="info"  @click="$router.push(`/productdetail/${item.goods_id}`)">
             <span class="tit text-ellipsis-2">{{ item.goods.goods_name }}</span>
             <span class="bottom">
               <div class="price">¥ <span>{{ item.goods.goods_price_min }}</span></div>
@@ -60,7 +60,15 @@ export default {
   name: 'CartPage',
   computed: {
     ...mapState('Cart', ['cartList']),
-    ...mapGetters('Cart', ['countCartTotal', 'selectedCartList', 'selectedCartCount', 'selectedPrice', 'isAllChecked']),
+    ...mapGetters('Cart',
+      [
+        'countCartTotal',
+        'selectedCartList',
+        'selectedCartCount',
+        'selectedPrice',
+        'isAllChecked',
+        'selectedGoodsId'
+      ]),
     isLogin () {
       return this.$store.getters.token
     }
@@ -94,21 +102,31 @@ export default {
       }
       this.$store.commit('Cart/changeCount', obj)
     },
-    goPay () {
+    async goPay () {
       // 先触发购物车与后台数据的同步
-      this.$store.dispatch('Cart/syncCartAction')
+      await this.$store.dispatch('Cart/syncCartAction')
 
       // 判断是否选中了商品，否则无事发生
       if (this.selectedCartCount > 0) {
         // 说明有选中商品
+        this.$router.push({
+          path: '/pay',
+          query: {
+            mode: 'cart',
+            goodsId: this.selectedGoodsId,
+            // 将选中的商品id拼接成字符串，如：cartIds=40971,40998
+            cartIds: this.selectedCartList.map(item => item.id).join(',')
+          }
+        })
       }
-      this.$router.push('/pay')
     },
     delSelectedCart () {
       // 删除选中的购物车商品
       this.$store.dispatch('Cart/delSelCartA')
       // 删除完成之后退出编辑状态
       this.isEdit = false
+      // 删除之后重新拉取购物车列表数据
+      this.$store.dispatch('Cart/getCartAction')
     }
   },
   components: {

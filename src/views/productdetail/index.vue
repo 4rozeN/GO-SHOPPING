@@ -103,7 +103,7 @@
         <!-- 有库存才显示可购买 -->
         <div class="showbtn" v-if="goodsDetailObj.stock_total > 0">
           <div class="btn" v-if="this.mode === 'cart'" @click="addCart">加入购物车</div>
-          <div class="btn now" v-else>立刻购买</div>
+          <div class="btn now" v-else @click="goBuyNow">立刻购买</div>
         </div>
         <div class="btn-none" v-else>该商品已抢完</div>
       </div>
@@ -229,6 +229,19 @@ export default {
       this.cartTotal = this.countCartTotal
       this.$toast('加入购物车成功！')
       this.showPannel = false // 关闭弹层
+    },
+    goBuyNow () {
+      this.mode = 'buyNow'
+      this.$store.commit('Order/setMode', 'buyNow')
+      this.$router.push({
+        path: '/pay',
+        query: {
+          mode: localStorage.getItem('modeLS'),
+          goodsId: this.detailId,
+          goodsSkuId: this.goodsSkuId,
+          goodsNum: this.addCount
+        }
+      })
     }
   },
   watch: {

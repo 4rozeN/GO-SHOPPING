@@ -1,14 +1,14 @@
 <template>
   <!-- 可编辑也可以作为添加地址的页面 -->
   <div class="address-list">
-    <van-nav-bar fixed title="地址编辑" left-arrow @click-left="$router.replace('/address/manage')" />
+    <van-nav-bar fixed title="地址编辑" left-arrow @click-left="goAddressM" />
 
     <div class="address-edit">
       <van-address-edit
         :address-info="addressInfo"
         :area-list="areaList"
         show-delete
-        :show-set-default="this.adsId != -1 ? true : false"
+        :show-set-default="editAddressId ? true : false"
         show-search-result
         :search-result="searchResult"
         :area-columns-placeholder="['请选择', '请选择', '请选择']"
@@ -23,14 +23,17 @@
 
 <script>
 import { Toast } from 'vant'
-import { mapActions, mapGetters } from 'vuex'
+import { mapActions, mapGetters, mapMutations } from 'vuex'
 import { areaList } from '@vant/area-data' // 引入vant官方的地区数据
+import { getAddressDetail, getDefaultAddressId, addAddress, updateAddress, setDefaultAddress, deleteAddress } from '@/api/address'
+import addressCTN from '@/mixins/addressCTN'
 
 export default {
   name: 'AddressEdit',
+  mixins: [addressCTN],
   data () {
     return {
-      adsId: 0, // 地址id
+      ifDefaultId: 0, // 获取到的默认地址id
       addressInfo: {}, // 初始地址详情对象，若是新建地址则为空对象
       areaList: areaList, // 地区列表
       searchResult: [], // 详细地址搜索结果
@@ -38,160 +41,164 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('AddressMap', ['nameToCode', 'codeToName']),
-    // 获取要进行编辑的地址id，如果为空则赋值为-1表示为新建地址
-    getAdsId () {
-      return this.$route.params.adsid || -1
+    // 获取要进行编辑的地址id
+    editAddressId () {
+      return this.getAddressId()
     }
   },
   async created () {
-    // 构建映射表
-    await this.buildReverseMaps()
-
-    // 获取要进行编辑的地址id，如果为空则赋值为-1表示为新建地址
-    this.adsId = this.getAdsId
-    // console.log('adsId:', this.adsId)
-
-    // 如果adsId不等于-1，则进行地址详情的拉取
-    if (this.adsId !== -1) {
-      // 说明是编辑地址，则需要拉取地址详情
-      const { data: { detail } } = await this.getAddressDetail(this.adsId)
-      this.addressInfo = {
-        id: detail.address_id,
-        name: detail.name,
-        tel: detail.phone,
-        province: this.codeToName(detail.province_id) || '',
-        city: this.codeToName(detail.city_id) || '',
-        county: this.codeToName(detail.county_id) || '',
-        addressDetail: detail.detail,
-        areaCode: String(detail.region_id),
-        isDefault: this.isDefault
+    // 通过isEdit判断操作类型，渲染数据
+    if (this.editAddressId !== 0) {
+      console.log('this.editAddressId:', this.editAddressId)
+      // 为真，说明是编辑操作，需要获取当前操作的地址信息
+      try {
+        // 获取当前操作的地址详情
+        const { data: { detail } } = await getAddressDetail(this.editAddressId)
+        this.addressInfo = detail
+      } catch (error) {
+        console.log(error)
       }
-      // 从Vuex得到默认地址的id
-      const defaultAddressId = this.$store.state.Address.defaultAddressId
-      // 比对当前地址是否为默认地址
-      if (Number(defaultAddressId) === Number(detail.address_id)) {
-        console.log('当前地址为默认地址')
-        this.addressInfo.isDefault = true // 设置默认按钮为打开状态
-        this.checkDefault = true // 为真说明该地址获取的时候就是默认地址
-      } else {
-        // 说明当前地址不是默认地址
-        console.log('当前地址不是默认地址')
-        this.addressInfo.isDefault = false // 设置默认按钮为关闭状态
-        this.checkDefault = false // 为假说明该地址获取的时候不是默认地址
+      try {
+        // 获取用户默认地址id
+        this.ifDefaultId = await getDefaultAddressId()
+      } catch (error) {
+        this.addressInfo.isDefault = false
+        console.log('用户默认地址为空')
       }
+      // 判断是否为默认地址
+      if (this.addressInfo.address_id === this.ifDefaultId) {
+        // 补全缺少的isDefault属性，并设置为true
+        this.addressInfo.isDefault = true
+      } else { this.addressInfo.isDefault = false }
+      // 通过Code得到地址Name
+      this.addressInfo.region_id = String(this.addressInfo.region_id)
+      // console.log('this.addressInfo.region_id:', this.addressInfo.region_id)
+      this.addressInfo.region = this.getRegionStrByCode(this.addressInfo.region_id)
+      // 格式化地址详情使其便于组件渲染
+      this.formatStructure(this.addressInfo)
+      // console.log('格式化后的this.addressInfo:', this.addressInfo)
     } else {
-      // 说明是新建地址，不做操作
+      // 说明是新增操作，啥也不做
     }
   },
   methods: {
     ...mapActions('Address', ['getAddressDetail', 'addAddress', 'updateAddress']),
-    ...mapActions('AddressMap', ['buildReverseMaps']),
-
-    // 保存地址
-    async onSave (content) {
-      // 判断是新建地址还是编辑地址
-      if (this.adsId === -1) {
-        // 新建地址
-        content.country = '中国'
-        this.addressInfo = content
-
-        // 使用映射表进行地区数据处理
-        const region = [
-          {
-            value: Number(this.nameToCode(content.province)) || '',
-            label: content.province
-          },
-          {
-            value: Number(this.nameToCode(content.city)) || '',
-            label: content.city
-          },
-          {
-            value: Number(this.nameToCode(content.county)) || '',
-            label: content.county
-          }
-        ]
-
-        // 封装数据对象
-        const dataObj = {
-          name: this.addressInfo.name,
-          phone: this.addressInfo.tel,
-          region: region,
-          detail: this.addressInfo.addressDetail
+    ...mapMutations('Address', ['CLEAR_ADDRESS_ID']),
+    ...mapGetters('Address', ['getAddressId']),
+    async addOneAdress (addressObj) {
+      // 新增地址
+      // 通过areaCode得到省市区三个Code
+      console.log('新增地址:', addressObj)
+      const { provinceCode, cityCode, countyCode } = this.getThreeCodeByRegionCode(addressObj.areaCode)
+      // 封装接口需要的参数对象
+      const dataObj = {
+        form: {
+          name: addressObj.name,
+          phone: addressObj.tel,
+          region: [
+            { value: Number(provinceCode), label: addressObj.province },
+            { value: Number(cityCode), label: addressObj.city },
+            { value: Number(countyCode), label: addressObj.county }
+          ],
+          detail: addressObj.addressDetail
         }
-
-        // 调用接口进行地址的保存
-        await this.addAddress(dataObj)
+      }
+      console.log('dataObj:', dataObj)
+      try {
+        await addAddress(dataObj)
         Toast('保存成功')
-        this.$router.replace({ path: '/address/manage' }) // 保存成功后返回地址列表页面
-      } else {
-        // 编辑地址
-        // console.log('编辑地址的content:', content)
-        this.addressInfo = content
-        // 封装对象，用于发送请求
-        const dataObj = {
-          address_id: this.addressInfo.id,
-          form: {
-            name: this.addressInfo.name,
-            phone: this.addressInfo.tel,
-            region: [
-              {
-                label: this.addressInfo.province,
-                value: Number(this.nameToCode(this.addressInfo.province)) || ''
-              },
-              {
-                label: this.addressInfo.city,
-                value: Number(this.nameToCode(this.addressInfo.city)) || ''
-              },
-              {
-                label: this.addressInfo.county,
-                value: Number(this.nameToCode(this.addressInfo.county)) || ''
-              }
-            ],
-            detail: this.addressInfo.addressDetail
-          }
-        }
-        // console.log('dataObj:', dataObj)
-        await this.updateAddress(dataObj)
-        Toast('保存成功')
-
-        // 处理默认地址的标识问题
-        if (this.checkDefault) { // 为真说明当前编辑的是默认地址
-          console.log('当前是默认地址，content:', content)
-          console.log('当前是默认地址，this.adressInfo:', this.addressInfo)
-
-          if (content.isDefault !== this.checkDefault) {
-            // 说明用户取消了这个默认地址，需要将Vuex的默认地址id赋值为-1
-            this.$store.commit('Address/setDefaultAddressId', -1)
-          }
-          // 否则什么也不做
-        } else {
-          // 说明当前编辑的不是默认地址
-          console.log('当前不是默认地址，content:', content)
-          console.log('当前不是默认地址，this.adressInfo:', this.addressInfo)
-
-          if (content.isDefault !== this.checkDefault) {
-            // 说明用户将当前不是默认地址的地址设置为默认地址
-            this.$store.commit('Address/setDefaultAddressId', this.addressInfo.id)
-          }
-          // 否则什么也不做
-        }
-
-        // 处理完成后跳转会地址列表页
-        this.$router.replace({ path: '/address/manage' })
+        console.log('新增地址成功')
+      } catch (error) {
+        console.log(error)
       }
     },
-    async onDelete () {
-      // 判断是否删除的是默认地址，如果是，则将Vuex的默认地址id赋值为-1
-      if (this.checkDefault) {
-        this.$store.commit('Address/setDefaultAddressId', -1)
-        console.log('删除默认地址, Vuex的默认地址id:', this.$store.state.Address.defaultAddressId)
+    async updateOneAdress (addressObj) {
+      // 通过areaCode得到省市区三个Code
+      const { provinceCode, cityCode, countyCode } = this.getThreeCodeByRegionCode(addressObj.areaCode)
+      // 封装接口需要的参数对象
+      const dataObj = {
+        addressId: String(addressObj.id),
+        form: {
+          name: addressObj.name,
+          phone: addressObj.tel,
+          region: [
+            { value: provinceCode, label: addressObj.province },
+            { value: cityCode, label: addressObj.city },
+            { value: countyCode, label: addressObj.county }
+          ],
+          detail: addressObj.addressDetail
+        }
       }
-      await this.$store.dispatch('Address/deleteAddress', this.addressInfo.id)
+      // console.log('dataObj:', dataObj)
+      // 先判断是否设置了isDefault属性
+      if (addressObj.isDefault) {
+        try {
+          await setDefaultAddress(addressObj.id)
+          console.log('设置默认地址成功：', addressObj.id)
+        } catch (error) {
+          console.log(error)
+        }
+      }
+      try {
+        await updateAddress(dataObj)
+        Toast('修改成功')
+        console.log('更新地址成功')
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    // 保存按钮的点击事件
+    async onSave (content) {
+      // console.log(content)
+      // 判断是新建地址还是编辑地址
+      if (this.editAddressId === 0) {
+        // 新建地址
+        this.addOneAdress(content)
+      } else {
+        // 编辑地址
+        this.updateOneAdress(content)
+      }
+    },
+    // 删除按钮的点击事件
+    async onDelete (content) {
+      console.log('删除地址:', content)
+      await deleteAddress(content.id)
       Toast('删除成功')
-      setTimeout(() => {
-        this.$router.replace('/address/manage')
-      }, 1000)
+      // 刷新页面
+      this.$router.replace({
+        name: 'AddressM',
+        query: {
+          ...this.$route.query
+        }
+      })
+    },
+    formatStructure (item) {
+      // 改变item对象的键名
+      item.id = item.address_id
+      // item.name = item.name
+      item.tel = item.phone
+      item.province = item.province_id
+      item.city = item.city_id
+      item.county = item.region_id
+      item.addressDetail = item.detail
+      item.areaCode = item.region_id
+
+      // 删除旧的键名
+      delete item.address_id
+      delete item.phone
+      delete item.province_id
+      delete item.city_id
+      delete item.region_id
+      delete item.detail
+    },
+    goAddressM () {
+      this.$router.replace({
+        name: 'AddressM',
+        query: {
+          adsid: this.adsId,
+          ...this.$route.query
+        }
+      })
     },
     // 设置默认地址
     onChangeDefault (val) {
@@ -200,6 +207,10 @@ export default {
       this.addressInfo.isDefault = val
       console.log('设置默认地址的按钮被触发, this.addressInfo.isDefault:', this.addressInfo.isDefault)
     }
+  },
+  destroyed () {
+    // 清除编辑地址的id
+    this.CLEAR_ADDRESS_ID()
   }
 }
 </script>

@@ -1,6 +1,6 @@
 <template>
   <div class="address-list">
-    <van-nav-bar fixed title="地址列表" left-arrow @click-left="$router.go(-1)" />
+    <van-nav-bar fixed title="地址列表" left-arrow @click-left="goWhere" />
     <div v-if="list.length > 0">
       <!-- 用于区分的文字 -->
       <div class="address-list-header">
@@ -27,15 +27,20 @@
 </template>
 
 <script>
-import { Toast, Dialog } from 'vant'
-import { mapActions, mapGetters } from 'vuex'
+import { Dialog } from 'vant'
+import { mapActions, mapGetters, mapMutations } from 'vuex'
+import addressCTN from '@/mixins/addressCTN'
+import { getAddressList, getDefaultAddressId, getAddressDetail } from '@/api/address'
 
 export default {
   name: 'AddressList',
+  mixins: [addressCTN],
   data () {
     return {
+      // 中间变量，用于暂时存放默认地址id
+      zeroId: 0,
       // 默认选中的地址id
-      chosenAddressId: '',
+      chosenAddressId: 0,
       // 地址列表
       list: [],
       // 禁用状态的地址列表（超出快递范围）
@@ -43,82 +48,89 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('AddressMap', ['codeToName']),
     ...mapGetters('Address', ['getDefaultAddressId']),
     disabledText () {
       return this.disabledList.length > 0 ? '以下地址超出配送范围' : ''
     }
   },
   async created () {
+    // console.log(this.getFrom)
+    // 获取默认地址id
     try {
-      // 构建地区映射表
-      await this.buildReverseMaps()
-
-      // 获取地址列表
-      const response = await this.getAddressList()
-      // console.log('获取地址列表成功：', response)
-      const addressData = response.list || []
-      // console.log('地址数据：', addressData)
-
-      // 格式化地址列表数据
-      this.list = addressData
-        .filter((item) => !item.is_disabled) // 过滤掉禁用的地址
-        .map((item) => ({
-          id: item.address_id,
-          name: item.name,
-          tel: item.phone,
-          address: this.formatAddress(item),
-          isDefault: item.is_default || false
-        }))
-
-      // 从Vuex中获取默认地址的id
-      const defaultAddressId = this.getDefaultAddressId
-      console.log('默认地址id：', defaultAddressId)
-
-      if (Number(defaultAddressId) !== -1) {
-        // 遍历比对列表每一项的id是否与defaultAddressId相等，找到后返回索引
-        const defaultIndex = this.list.findIndex((item) => Number(item.id) === Number(defaultAddressId))
-        if (Number(defaultIndex) !== -1) {
-          // 找到后设置默认地址
-          this.list[defaultIndex].isDefault = true
-          this.chosenAddressId = Number(defaultAddressId)
-        }
-      } else {
-        // Vuex没有默认地址，则默认选中第一个地址
-        // Toast('小主还没有默认地址哦\n快来设置一个吧❤️')
-        // console.log('未找到有效的默认地址')
-        this.chosenAddressId = this.list[0].id || ''
-      }
-      // 设置禁用的地址列表
-      this.disabledList = addressData
-        .filter((item) => item.is_disabled)
-        .map((item) => ({
-          id: item.address_id,
-          name: item.name,
-          tel: item.phone,
-          address: this.formatAddress(item),
-          isDefault: item.is_default || false
-        }))
+      const res = await this.myDefaultAddressId() // 获取默认地址id
+      this.chosenAddressId = res.data.defaultId
+      this.zeroId = this.chosenAddressId
+      console.log('拉取默认地址id：', this.chosenAddressId)
     } catch (error) {
-      // console.error('获取地址列表失败：', error)
-      Toast('地址为空')
+      // 失败说明没有默认地址
+      this.chosenAddressId = this.list[0].id
+      console.log('获取默认地址id失败：', error)
+    }
+
+    // 获取地址列表
+    try {
+      this.list = await this.myAdressList()
+      // console.log('首次拉取到的this.list:', this.list)
+      // 没有默认地址则给this.list的每一个对象添加isDefault属性，值为false
+      this.list.forEach(item => {
+        item.isDefault = false
+      })
+      // 给默认地址添加isDefault属性，值为true
+      this.list.forEach(item => {
+        // console.log('kkitem:', item)
+        if (Number(item.address_id) === Number(this.chosenAddressId)) {
+          // console.log('找到默认地址：', item)
+          item.isDefault = true
+        }
+      })
+      console.log('根据是否有默认地址，给this.list添加isDefault属性后的this.list：', this.list)
+      // 格式化地区信息，通过Code得到Name
+      this.list.forEach(item => {
+        item.region = this.getRegionStrByCode(String(item.region_id))
+      })
+      // 格式化list，使其中的键名符合vant的Address数据结构，便于渲染展示
+      this.list.forEach(item => {
+        item = this.formatStructure(item)
+        // console.log('item:', item)
+      })
+    } catch (error) {
+      this.list = []
+      console.log('获取地址列表失败：', error)
     }
   },
   methods: {
     ...mapActions('Address', ['getAddressList']),
-    ...mapActions('AddressMap', ['buildReverseMaps']),
-    // 格式化地址：
-    formatAddress (item) {
-      const provinceName = this.codeToName(item.province_id) || ''
-      const cityName = this.codeToName(item.city_id) || ''
-      const countyName = this.codeToName(item.county_id) || ''
-      const detailAddress = item.detail || ''
-      const result = `${provinceName}${cityName}${countyName}${detailAddress}`
-      // console.log('codeToname：', this.codeToName(item.province_id))
-      return result
+    ...mapMutations('Address', ['SET_ADDRESS_ID', 'SET_SELECTED_ADDRESS_ID']),
+    // 得到地址列表
+    async myAdressList () {
+      const { data: { list } } = await getAddressList()
+      return list
+    },
+    // 格式化从后端得到的数据，将其符合vant的Address数据结构
+    formatStructure (item) {
+      // 改变item对象的键名
+      item.id = item.address_id
+      item.tel = item.phone
+      item.address = item.region + item.detail
+
+      // 删除旧的键名
+      delete item.address_id
+      delete item.phone
+      delete item.region
+      delete item.detail
+    },
+    // 得到默认地址id
+    async myDefaultAddressId () {
+      const defaultAddressId = await getDefaultAddressId()
+      return defaultAddressId
+    },
+    // 得到地址详情
+    async myAddressDetail (addressId) {
+      const { data: { detail } } = await getAddressDetail(addressId)
+      return detail
     },
     onSelect (item) {
-      console.log('选择地址id：', this.chosenAddressId)
+      console.log('选中了item：', item)
       // this.$router.replace(`/pay?adsid=${item.id}`)
       Dialog.alert({
         title: '选择确认',
@@ -126,29 +138,63 @@ export default {
         showCancelButton: true
       }).then(() => {
         // on close
-        // this.$router.replace(`/pay?adsid=${item.id}`)
+        // 设置选中地址id
+        this.SET_SELECTED_ADDRESS_ID(item.id)
         this.$router.replace({
           name: 'Pay', // 使用replace带参数必须使用name，路由配置也必须存在name
-          params: {
+          query: {
+            ...this.$route.query,
             adsid: item.id
           }
         })
       }).catch(() => {
-        // on cancel
+        // 点击取消后将chosenAddressId赋值为默认地址id
+        this.chosenAddressId = this.zeroId
       })
     },
     onAdd () {
-      this.$router.replace('/address/edit?adsid=')
-    },
-    onEdit (item) {
-      // console.log('跳转到编辑：', item)
-      // this.$router.replace(`/address/edit?adsid=${item.id}`)
       this.$router.replace({
         name: 'AddressE',
-        params: {
-          adsid: item.id
+        query: {
+          ...this.$route.query
         }
       })
+    },
+    onEdit (item) {
+      // 设置要进行传递的地址id
+      this.SET_ADDRESS_ID(item.id)
+      console.log('跳转到编辑：', item)
+      this.$router.replace({
+        name: 'AddressE',
+        query: {
+          ...this.$route.query
+        }
+      })
+    },
+    goWhere () {
+      // console.log('params:', this.$route.params.whoami)
+      // 判断有没有传参数
+      if (this.getFrom) {
+        if (this.getFrom === 'pay') {
+          console.log('跳转到支付页面')
+          this.$router.replace({
+            name: 'Pay',
+            query: {
+              ...this.$route.query
+            }
+          })
+        } else if (this.getFrom === 'I') {
+          // 未来添加返回个人页面
+          // this.$router.replace({
+          //   name: 'Cart',
+          //   query: {
+          //     ...this.$route.query
+          //   }
+          // })
+        }
+      } else {
+        this.$router.go(-1)
+      }
     }
   }
 }

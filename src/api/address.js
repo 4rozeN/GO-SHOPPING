@@ -14,17 +14,17 @@ export const getAddressDetail = (addressId) => {
   })
 }
 
+// 获取默认地址id
+export const getDefaultAddressId = () => {
+  return request.get('/address/defaultId')
+}
+
 // 添加收货地址
 export const addAddress = (dataObj) => {
-  // console.log('api_dataObj', dataObj)
+  console.log('api_dataObj', dataObj)
   // 直接使用dataObj中的数据
   return request.post('/address/add', {
-    form: {
-      name: dataObj.name,
-      phone: dataObj.phone,
-      region: dataObj.region,
-      detail: dataObj.detail
-    }
+    form: dataObj.form
   })
 }
 
@@ -32,7 +32,7 @@ export const addAddress = (dataObj) => {
 export const updateAddress = (dataObj) => {
   // 直接使用dataObj中的数据
   return request.post('/address/edit', {
-    addressId: dataObj.address_id,
+    addressId: dataObj.addressId,
     form: dataObj.form
   })
 }

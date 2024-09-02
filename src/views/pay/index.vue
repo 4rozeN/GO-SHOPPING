@@ -9,13 +9,13 @@
         <van-icon name="logistics" />
       </div>
 
-      <div class="info" v-if="addressList.length > 0">
+      <div class="info" v-if="chosenAddress">
         <div class="info-content">
           <span class="name">{{ chosenAddress.name }} </span>
           <span class="mobile">{{ chosenAddress.phone }}</span>
         </div>
         <div class="info-address">
-          {{ regionName.province }} {{ regionName.city }} {{ regionName.county }} {{ chosenAddress.detail }}
+          {{ chosenAddress.detail }}
         </div>
       </div>
 
@@ -41,7 +41,7 @@
               </p>
               <p class="info">
                 <span class="count">共{{ item.goods_num }}件</span>
-                <span class="price">¥{{item.goods.goods_price_min * item.goods_num}}</span>
+                <span class="price">¥{{(item.goods.goods_price_min * item.goods_num).toFixed(2)}}</span>
               </p>
             </div>
         </div>
@@ -82,100 +82,167 @@
 
       <!-- 买家留言 -->
       <div class="buytips">
-        <textarea placeholder="选填：买家留言（50字内）" name="" id="" cols="30" rows="10"></textarea>
+        <textarea v-model="remark" placeholder="选填：买家留言（50字内）" name="" id="" cols="30" rows="10"></textarea>
       </div>
     </div>
 
     <!-- 底部提交 -->
     <div class="footer-fixed">
       <div class="left">实付款：<span>￥{{selectedPrice()}}</span></div>
-      <div class="tipsbtn" @click="$router.push('/order/confirm')">提交订单</div>
+      <div class="tipsbtn" @click="orderConfirm">提交订单</div>
     </div>
   </div>
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex'
+import addressCTN from '@/mixins/addressCTN' // 将地区Code转为Name，需要传入regionCode
+import { mapActions, mapGetters, mapMutations } from 'vuex'
+import { checkOrder } from '@/api/order'
+import { getDefaultAddressId, getAddressList, getAddressDetail } from '@/api/address'
 
 export default {
   name: 'PayIndex',
+  mixins: [addressCTN],
   async created () {
-    console.log('params:', this.$route.params.adsid)
-    // 构建地区映射表
-    await this.buildReverseMaps()
-
-    // 处理购物车详情展示
-    // 拉取购物车列表
-    await this.getCartAction()
-    this.cartList = this.selectedCartList()
-    console.log('购物车列表：', this.cartList)
-
-    // 获取地址列表
-    const { list } = await this.getAddressList()
-    this.addressList = list
-    console.log('地址列表：', this.addressList)
-
-    // 从Vuex中获取默认地址的id
-    const defaultAddressId = this.getDefaultAddressId()
-    console.log('默认地址id：', defaultAddressId)
-
-    if (this.addressList.length > 0) {
-      // 如果有地址查询参数?adsid，则说明进行了地址切换
-      console.log('地址切换参数：', this.getadsid)
-      if (this.getadsid) {
-        // chosenAddress被赋值为切换的id的地址
-        const address = this.addressList.find(item => String(item.address_id) === String(this.getadsid))
-        this.chosenAddress = address
-        console.log('切换后的地址：', this.chosenAddress)
-      } else {
-        // 如果没有地址切换参数，则说明没有切换地址
-        if (Number(defaultAddressId) !== -1) {
-          // 遍历比对列表每一项的id是否与defaultAddressId相等，找到后返回索引（强等于比较，注意类型）
-          const defaultIndex = this.addressList.findIndex((item) => String(item.address_id) === String(defaultAddressId))
-          // console.log('默认地址索引：', defaultIndex)
-          if (Number(defaultIndex) !== -1) {
-            // 找到后将数组数据转对象赋值给chosenAddress属性
-            this.chosenAddress = this.addressList[defaultIndex]
-
-            // 处理地址Code转为Name
-            const regionId = String(this.chosenAddress.region_id)
-            // 调用 getFullAddressInfo 方法
-            this.regionName = await this.fetchFullAddressName(regionId)
-          } else {
-            console.log('未找到有效的默认地址索引')
-          }
-        } else {
-          // Vuex没有默认地址，则默认选中第一个地址
-          // 设置chosenAddress属性为addressList的第一个地址
-          this.chosenAddress = this.addressList[0]
-          const regionId = String(this.chosenAddress.region_id)
-          this.regionName = await this.fetchFullAddressName(regionId)
-          console.log('无默认地址，展示数据chosenAddress：', this.chosenAddress)
-        }
+    // console.log('params:', this.$route.params.adsid)
+    if (this.getSelection()) {
+      console.log('有选择地址!')
+      this.showToggleAddress()
+    } else {
+      // 没有手动切换过地址，则拉取地址列表得到地址进行展示
+      try {
+        const { data: { defaultId } } = await this.myDefaultAddressId() || 0
+        this.myDefaultId = defaultId
+        console.log('defaultId:', defaultId)
+      } catch (error) {
+        this.myDefaultId = 0
+        console.log('没有默认地址Id', error)
       }
+      if (this.myDefaultId) {
+        // 说明有默认地址，拉取地址详情
+        const res = await this.myAddressDetail(Number(this.myDefaultId))
+        // 格式化地区信息
+        res.detail = this.getRegionStrByCode(String(res.region_id))
+        // 将得到的地址信息给本地进行渲染
+        this.chosenAddress = res
+        console.log('有默认地址，地址详情res：', res)
+        console.log('格式化后的地址：', this.chosenAddress)
+      } else {
+        // 说明没有默认地址Id，展示地址列表的第一个数据
+        const res = await this.myAddressListZero()
+        // 格式化地区信息
+        res.detail = this.getRegionStrByCode(String(res.region_id))
+        // 将得到的地址信息给本地进行渲染
+        this.chosenAddress = res
+        console.log('没有默认地址，展示第一个地址：', res)
+        console.log('格式化后的地址：', this.chosenAddress)
+      }
+    }
+    // 提交订单
+    try {
+      await this.getOrderList()
+    } catch (error) {
+      console.log('提交订单失败', error)
     }
   },
   data () {
     return {
-      addressList: [], // 地址列表
+      myDefaultId: 0, // 默认地址Id
+      remark: '', // 买家留言
       chosenAddress: {}, // 被选择进行展示的地址
-      regionName: {}, // 将地址Code转为Name
       cartList: [] // 购物车列表
     }
   },
   computed: {
+    selectedA () {
+      return this.chosenAddress
+    },
+    cartIds () {
+      return this.getCartIds()
+    },
     getadsid () {
       return this.$route.params.adsid
+    },
+    getModeType () {
+      return this.$route.query.mode
+    },
+    goodsId () {
+      return this.$route.query.goodsId
+    },
+    goodsSkuId () {
+      return this.$route.query.goodsSkuId
+    },
+    goodsNum () {
+      return this.$route.query.goodsNum
     }
   },
   methods: {
-    ...mapActions('Address', ['getAddressList', 'getAddressDetail']),
-    ...mapGetters('Address', ['getDefaultAddressId']),
-    ...mapActions('AddressMap', ['buildReverseMaps', 'fetchFullAddressName']),
+    ...mapMutations('Address', ['CLEAR_SELECTED_ADDRESS_ID']),
+    ...mapActions('Address', ['getAddressList']),
+    ...mapGetters('Address', ['getDefaultAddressId', 'getSelection']),
     ...mapActions('Cart', ['getCartAction']),
     ...mapGetters('Cart', ['selectedCartList', 'selectedCartCount', 'selectedPrice']),
+    ...mapGetters('Order', ['getMode', 'getCartIds']),
+    // 展示切换选中的地址详情
+    async showToggleAddress () {
+      const resId = this.getSelection()
+      console.log('选择的地址Id:', resId)
+      const resInfo = await this.myAddressDetail(resId)
+      resInfo.detail = this.getRegionStrByCode(String(resInfo.region_id))
+      this.chosenAddress = resInfo
+    },
+    // 得到默认地址id
+    async myDefaultAddressId () {
+      const defaultAddressId = await getDefaultAddressId()
+      return defaultAddressId
+    },
+    // 得到地址列表的首位数据
+    async myAddressListZero () {
+      const { data: { list } } = await getAddressList()
+      return list[0] // 里面是对象
+    },
+    // 得到地址详情
+    async myAddressDetail (addressId) {
+      const { data: { detail } } = await getAddressDetail(addressId)
+      return detail
+    },
+    // 点击事件，跳转到地址管理页面
     goAddress () {
-      this.$router.push('/address/manage')
+      // 跳转保留当前页面query参数
+      this.$router.push({
+        path: '/address/manage',
+        query: {
+          ...this.$route.query // 保留当前页面query参数
+        },
+        params: {
+          // 声明我是谁
+          whoami: 'pay'
+        }
+      })
+    },
+    // 点击事件，提交订单
+    async getOrderList () {
+      if (this.getModeType === 'cart') {
+        console.log('得到查询参数cartIds:', this.cartIds)
+        console.log('得到查询参数goodsId:', this.goodsId)
+        await checkOrder(this.getModeType, {
+          cartIds: this.cartIds,
+          goodsId: '10083'
+        })
+      }
+      if (this.getModeType === 'buyNow') {
+        console.log('goodsId:', this.goodsId)
+        console.log('goodsNum:', this.goodsNum)
+        console.log('goodsSkuId:', this.goodsSkuId)
+        await checkOrder(this.getModeType, {
+          goodsId: this.goodsId,
+          goodsNum: this.goodsNum,
+          goodsSkuId: this.goodsSkuId
+        })
+      }
+    },
+    // 结算订单
+    async orderConfirm () {
     }
   }
 }
