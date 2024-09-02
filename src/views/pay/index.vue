@@ -31,36 +31,36 @@
     <!-- 订单明细 -->
     <div class="pay-list">
       <div class="list">
-        <div class="goods-item" v-for="item in cartList" :key="item.id">
+        <div class="goods-item" v-for="item in goodsList" :key="item.goods_id">
             <div class="left">
-              <img :src="item.goods.goods_image" alt="" />
+              <img :src="item.goods_image" alt="" />
             </div>
             <div class="right">
               <p class="tit text-ellipsis-2">
-                 {{ item.goods.goods_name }}
+                 {{ item.goods_name }}
               </p>
               <p class="info">
-                <span class="count">共{{ item.goods_num }}件</span>
-                <span class="price">¥{{(item.goods.goods_price_min * item.goods_num).toFixed(2)}}</span>
+                <span class="count">共{{ item.total_num }}件</span>
+                <span class="price">¥{{(item.total_price)}}</span>
               </p>
             </div>
         </div>
       </div>
 
       <div class="flow-num-box">
-        <span>共 {{selectedCartCount()}} 件商品，合计：</span>
-        <span class="money">￥{{selectedPrice()}}</span>
+        <span>共 {{goodsNumCount}} 件商品，合计：</span>
+        <span class="money">￥{{goodsTotalPrice}}</span>
       </div>
 
       <div class="pay-detail">
         <div class="pay-cell">
           <span>订单总金额：</span>
-          <span class="red">￥{{selectedPrice()}}</span>
+          <span class="red">￥{{goodsTotalPrice}}</span>
         </div>
 
         <div class="pay-cell">
           <span>优惠券：</span>
-          <span>无优惠券可用</span>
+          <span>{{personal.couponId ? '优惠券可用' : '无优惠券可用'}}</span>
         </div>
 
         <div class="pay-cell">
@@ -74,7 +74,7 @@
       <div class="pay-way">
         <span class="tit">支付方式</span>
         <div class="pay-cell">
-          <span><van-icon name="balance-o" />余额支付（可用 ¥ 999919.00 元）</span>
+          <span><van-icon name="balance-o" />余额支付（可用 ¥ {{personal.balance}} 元）</span>
           <!-- <span>请先选择配送地址</span> -->
           <span class="red"><van-icon name="passed" /></span>
         </div>
@@ -88,7 +88,7 @@
 
     <!-- 底部提交 -->
     <div class="footer-fixed">
-      <div class="left">实付款：<span>￥{{selectedPrice()}}</span></div>
+      <div class="left">实付款：<span>￥{{goodsTotalPrice}}</span></div>
       <div class="tipsbtn" @click="orderConfirm">提交订单</div>
     </div>
   </div>
@@ -106,7 +106,7 @@ export default {
   async created () {
     // console.log('params:', this.$route.params.adsid)
     if (this.getSelection()) {
-      console.log('有选择地址!')
+      // console.log('有选择地址!')
       this.showToggleAddress()
     } else {
       // 没有手动切换过地址，则拉取地址列表得到地址进行展示
@@ -150,15 +150,34 @@ export default {
       myDefaultId: 0, // 默认地址Id
       remark: '', // 买家留言
       chosenAddress: {}, // 被选择进行展示的地址
-      cartList: [] // 购物车列表
+      cartList: [], // 购物车列表
+      goodsList: [], // 要进行渲染的商品列表
+      personal: {}, // 个人信息
+      setting: {} // 系统设置
     }
   },
   computed: {
+    goodsTotalPrice () {
+      // 累加this.goodsList的goods_price_min
+      let price = 0
+      this.goodsList.forEach(item => {
+        price += Number(item.goods_price_min) * item.total_num
+      })
+      return price.toFixed(2)
+    },
+    goodsNumCount () {
+      // 累加this.goodsList的total_num
+      let count = 0
+      this.goodsList.forEach(item => {
+        count += item.total_num
+      })
+      return count
+    },
     selectedA () {
       return this.chosenAddress
     },
     cartIds () {
-      return this.getCartIds()
+      return this.$route.query.cartIds
     },
     getadsid () {
       return this.$route.params.adsid
@@ -186,10 +205,10 @@ export default {
     // 展示切换选中的地址详情
     async showToggleAddress () {
       const resId = this.getSelection()
-      console.log('选择的地址Id:', resId)
+      // console.log('选择的地址Id:', resId)
       const resInfo = await this.myAddressDetail(resId)
       resInfo.detail = this.getRegionStrByCode(String(resInfo.region_id)) + resInfo.detail
-      console.log('选择的地址详情resInfo:', resInfo)
+      // console.log('选择的地址详情resInfo:', resInfo)
       this.chosenAddress = resInfo
     },
     // 得到默认地址id
@@ -221,25 +240,32 @@ export default {
         }
       })
     },
-    // 点击事件，提交订单
+    // 提交订单
     async getOrderList () {
       if (this.getModeType === 'cart') {
-        console.log('得到查询参数cartIds:', this.cartIds)
-        console.log('得到查询参数goodsId:', this.goodsId)
-        await checkOrder(this.getModeType, {
-          cartIds: this.cartIds,
-          goodsId: '10083'
+        // console.log('getModeType === cart得到查询参数cartIds:', this.cartIds)
+        // console.log('getModeType === cart得到查询参数goodsId:', this.goodsId)
+        const { data } = await checkOrder(this.getModeType, {
+          cartIds: this.cartIds
         })
+        this.goodsList = data.order.goodsList
+        this.personal = data.personal
+        this.setting = data.setting
+        // console.log('得到的商品列表:', this.goodsList)
       }
       if (this.getModeType === 'buyNow') {
-        console.log('goodsId:', this.goodsId)
-        console.log('goodsNum:', this.goodsNum)
-        console.log('goodsSkuId:', this.goodsSkuId)
-        await checkOrder(this.getModeType, {
+        // console.log('getModeType === buyNow 得到查询参数goodsId:', this.goodsId)
+        // console.log('getModeType === buyNow 得到查询参数goodsNum:', this.goodsNum)
+        // console.log('getModeType === buyNow 得到查询参数goodsSkuId:', this.goodsSkuId)
+        const { data } = await checkOrder(this.getModeType, {
           goodsId: this.goodsId,
           goodsNum: this.goodsNum,
           goodsSkuId: this.goodsSkuId
         })
+        this.goodsList = data.order.goodsList
+        this.personal = data.personal
+        this.setting = data.setting
+        // console.log('得到的商品列表:', this.goodsList)
       }
     },
     // 结算订单

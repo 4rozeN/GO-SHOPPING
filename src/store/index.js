@@ -3,7 +3,6 @@ import Vuex from 'vuex'
 import User from '@/store/modules/user'
 import Cart from '@/store/modules/cart'
 import Address from '@/store/modules/address'
-import Order from '@/store/modules/order'
 
 Vue.use(Vuex)
 
@@ -25,7 +24,6 @@ export default new Vuex.Store({
   modules: {
     User,
     Cart,
-    Address,
-    Order
+    Address
   }
 })

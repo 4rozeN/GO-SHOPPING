@@ -236,7 +236,7 @@ export default {
       this.$router.push({
         path: '/pay',
         query: {
-          mode: localStorage.getItem('modeLS'),
+          mode: this.mode,
           goodsId: this.detailId,
           goodsSkuId: this.goodsSkuId,
           goodsNum: this.addCount
