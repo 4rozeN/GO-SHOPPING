@@ -122,7 +122,7 @@ export default {
         // 说明有默认地址，拉取地址详情
         const res = await this.myAddressDetail(Number(this.myDefaultId))
         // 格式化地区信息
-        res.detail = this.getRegionStrByCode(String(res.region_id))
+        res.detail = this.getRegionStrByCode(String(res.region_id)) + res.detail
         // 将得到的地址信息给本地进行渲染
         this.chosenAddress = res
         console.log('有默认地址，地址详情res：', res)
@@ -131,7 +131,7 @@ export default {
         // 说明没有默认地址Id，展示地址列表的第一个数据
         const res = await this.myAddressListZero()
         // 格式化地区信息
-        res.detail = this.getRegionStrByCode(String(res.region_id))
+        res.detail = this.getRegionStrByCode(String(res.region_id)) + res.detail
         // 将得到的地址信息给本地进行渲染
         this.chosenAddress = res
         console.log('没有默认地址，展示第一个地址：', res)
@@ -188,7 +188,8 @@ export default {
       const resId = this.getSelection()
       console.log('选择的地址Id:', resId)
       const resInfo = await this.myAddressDetail(resId)
-      resInfo.detail = this.getRegionStrByCode(String(resInfo.region_id))
+      resInfo.detail = this.getRegionStrByCode(String(resInfo.region_id)) + resInfo.detail
+      console.log('选择的地址详情resInfo:', resInfo)
       this.chosenAddress = resInfo
     },
     // 得到默认地址id
