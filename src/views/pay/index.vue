@@ -111,6 +111,7 @@ export default {
     } else {
       // 没有手动切换过地址，则拉取地址列表得到地址进行展示
       try {
+        // 尝试拉取默认地址id，如无赋值为0
         const { data: { defaultId } } = await this.myDefaultAddressId() || 0
         this.myDefaultId = defaultId
         console.log('defaultId:', defaultId)
@@ -118,24 +119,32 @@ export default {
         this.myDefaultId = 0
         console.log('没有默认地址Id', error)
       }
-      if (this.myDefaultId) {
-        // 说明有默认地址，拉取地址详情
-        const res = await this.myAddressDetail(Number(this.myDefaultId))
-        // 格式化地区信息
-        res.detail = this.getRegionStrByCode(String(res.region_id)) + res.detail
-        // 将得到的地址信息给本地进行渲染
-        this.chosenAddress = res
-        console.log('有默认地址，地址详情res：', res)
-        console.log('格式化后的地址：', this.chosenAddress)
+      await this.myAddressList()
+      if (this.addressList.length === 0) {
+        // 说明没有地址存在，啥也不干
+        this.chosenAddress = 0
+        console.log('没有地址存在，啥也干不了')
       } else {
-        // 说明没有默认地址Id，展示地址列表的第一个数据
-        const res = await this.myAddressListZero()
-        // 格式化地区信息
-        res.detail = this.getRegionStrByCode(String(res.region_id)) + res.detail
-        // 将得到的地址信息给本地进行渲染
-        this.chosenAddress = res
-        console.log('没有默认地址，展示第一个地址：', res)
-        console.log('格式化后的地址：', this.chosenAddress)
+        // 说明有地址存在
+        if (this.myDefaultId) {
+          // 说明有默认地址，拉取地址详情
+          const res = await this.myAddressDetail(Number(this.myDefaultId))
+          // 格式化地区信息
+          res.detail = this.getRegionStrByCode(String(res.region_id)) + res.detail
+          // 将得到的地址信息给本地进行渲染
+          this.chosenAddress = res
+          console.log('有默认地址，地址详情res：', res)
+          console.log('格式化后的地址：', this.chosenAddress)
+        } else {
+          // 说明没有默认地址Id，展示地址列表的第一个数据
+          const res = await this.myAddressListZero()
+          // 格式化地区信息
+          res.detail = this.getRegionStrByCode(String(res.region_id)) + res.detail
+          // 将得到的地址信息给本地进行渲染
+          this.chosenAddress = res
+          console.log('没有默认地址，展示第一个地址：', res)
+          console.log('格式化后的地址：', this.chosenAddress)
+        }
       }
     }
     // 提交订单
@@ -150,7 +159,7 @@ export default {
       myDefaultId: 0, // 默认地址Id
       remark: '', // 买家留言
       chosenAddress: {}, // 被选择进行展示的地址
-      cartList: [], // 购物车列表
+      addressList: [], // 购物车列表
       goodsList: [], // 要进行渲染的商品列表
       personal: {}, // 个人信息
       setting: {} // 系统设置
@@ -206,10 +215,20 @@ export default {
     async showToggleAddress () {
       const resId = this.getSelection()
       // console.log('选择的地址Id:', resId)
-      const resInfo = await this.myAddressDetail(resId)
-      resInfo.detail = this.getRegionStrByCode(String(resInfo.region_id)) + resInfo.detail
-      // console.log('选择的地址详情resInfo:', resInfo)
-      this.chosenAddress = resInfo
+      try {
+        const resInfo = await this.myAddressDetail(resId)
+        resInfo.detail = this.getRegionStrByCode(String(resInfo.region_id)) + resInfo.detail
+        // console.log('选择的地址详情resInfo:', resInfo)
+        this.chosenAddress = resInfo
+      } catch (error) {
+        console.log('切换地址失败', error)
+      }
+    },
+    // 得到地址列表
+    async myAddressList () {
+      const { data: { list } } = await getAddressList()
+      this.addressList = list
+      console.log('地址列表:', this.addressList)
     },
     // 得到默认地址id
     async myDefaultAddressId () {

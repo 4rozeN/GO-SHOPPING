@@ -34,11 +34,11 @@ export default {
   getters: {
     // 获取要进行编辑的地址id
     getAddressId (state) {
-      return state.addressId
+      return state.addressId || 0
     },
     // 获取选中的地址id
     getSelection (state) {
-      return state.selectedAddressId
+      return state.selectedAddressId || 0
     }
   }
 }

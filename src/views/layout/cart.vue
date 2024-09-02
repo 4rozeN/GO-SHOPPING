@@ -55,7 +55,7 @@
 
 <script>
 import CountBox from '@/components/CountBox'
-import { mapState, mapGetters } from 'vuex'
+import { mapState, mapGetters, mapMutations } from 'vuex'
 export default {
   name: 'CartPage',
   computed: {
@@ -88,6 +88,7 @@ export default {
     }
   },
   methods: {
+    ...mapMutations('Address', ['CLEAR_SELECTED_ADDRESS_ID']),
     toggleChecked (goodsId) {
       this.$store.commit('Cart/toggleChecked', goodsId)
     },
@@ -107,6 +108,7 @@ export default {
       await this.$store.dispatch('Cart/syncCartAction')
 
       // 判断是否选中了商品，否则无事发生
+      this.CLEAR_SELECTED_ADDRESS_ID()
       if (this.selectedCartCount > 0) {
         // 说明有选中商品
         this.$router.push({

@@ -113,7 +113,7 @@
 
 <script>
 import { getGoodsDetail, getGoodsCommentDetail } from '@/api/goodsDetail'
-import { mapGetters, mapActions } from 'vuex'
+import { mapGetters, mapActions, mapMutations } from 'vuex'
 import CountBox from '@/components/CountBox.vue'
 export default {
   name: 'ProDetail',
@@ -180,6 +180,7 @@ export default {
     }
   },
   methods: {
+    ...mapMutations('Address', ['CLEAR_SELECTED_ADDRESS_ID']),
     // 轮播图切换
     onChange (index) {
       this.current = index
@@ -232,7 +233,7 @@ export default {
     },
     goBuyNow () {
       this.mode = 'buyNow'
-      this.$store.commit('Order/setMode', 'buyNow')
+      this.CLEAR_SELECTED_ADDRESS_ID()
       this.$router.push({
         path: '/pay',
         query: {
