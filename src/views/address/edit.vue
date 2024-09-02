@@ -85,8 +85,25 @@ export default {
     ...mapActions('Address', ['getAddressDetail', 'addAddress', 'updateAddress']),
     ...mapMutations('Address', ['CLEAR_ADDRESS_ID']),
     ...mapGetters('Address', ['getAddressId']),
+    // 添加测试地址数据（可传入name参数）
+    async addOneTrue (content) {
+      // 此处添加一个固定的有效数据 （根据后端接口）
+      const dataObj = {
+        form: {
+          name: content.name,
+          phone: '13800138000',
+          region: [{ value: 1, label: '北京市' }, { value: 2, label: '北京市' }, { value: 3, label: '东城区' }],
+          detail: '这是有效的测试地址...'
+        }
+      }
+      try {
+        await addAddress(dataObj)
+      } catch (error) {
+        console.log('添加后端有效地址错误：', error)
+      }
+    },
     async addOneAdress (addressObj) {
-      // 新增地址
+      // 新增地址（根据vant地区库数据封装）
       // 通过areaCode得到省市区三个Code
       console.log('新增地址:', addressObj)
       const { provinceCode, cityCode, countyCode } = this.getThreeCodeByRegionCode(addressObj.areaCode)
@@ -153,7 +170,8 @@ export default {
       // 判断是新建地址还是编辑地址
       if (this.editAddressId === 0) {
         // 新建地址
-        this.addOneAdress(content)
+        // this.addOneAdress(content)
+        this.addOneTrue(content) // 测试用
       } else {
         // 编辑地址
         this.updateOneAdress(content)
