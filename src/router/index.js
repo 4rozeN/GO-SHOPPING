@@ -1,21 +1,22 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import Login from '@/views/login'
-import Search from '@/views/search'
-import SearchList from '@/views/searchlist'
 import Layout from '@/views/layout'
-import myorder from '@/views/myorder'
-import Pay from '@/views/pay'
-import ProductDetail from '@/views/productdetail'
-import Home from '@/views/layout/home'
-import Category from '@/views/layout/category'
 import Cart from '@/views/layout/cart'
 import User from '@/views/layout/user'
+import Home from '@/views/layout/home'
+import Category from '@/views/layout/category'
 import store from '@/store'
-import GoodsEvaluation from '@/views/productdetail/evaluation'
-import Address from '@/views/address/index.vue'
-import AddressEdit from '@/views/address/edit.vue'
-import NotFound from '@/views/404'
+// 下面是按需加载的组件
+const Login = () => import('@/views/login')
+const Search = () => import('@/views/search')
+const SearchList = () => import('@/views/searchlist')
+const myorder = () => import('@/views/myorder')
+const Pay = () => import('@/views/pay')
+const ProductDetail = () => import('@/views/productdetail')
+const GoodsEvaluation = () => import('@/views/productdetail/evaluation')
+const Address = () => import('@/views/address/index.vue')
+const AddressEdit = () => import('@/views/address/edit.vue')
+const NotFound = () => import('@/views/404')
 
 Vue.use(VueRouter)
 
