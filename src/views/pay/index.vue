@@ -97,7 +97,7 @@
 <script>
 import addressCTN from '@/mixins/addressCTN' // 将地区Code转为Name，需要传入regionCode
 import { mapActions, mapGetters, mapMutations } from 'vuex'
-import { checkOrder } from '@/api/order'
+import { checkOrder, submitOrder } from '@/api/order'
 import { getDefaultAddressId, getAddressList, getAddressDetail } from '@/api/address'
 
 export default {
@@ -289,6 +289,23 @@ export default {
     },
     // 结算订单
     async orderConfirm () {
+      if (this.getModeType === 'cart') {
+        const { data } = await submitOrder(this.getModeType, {
+          cartIds: this.cartIds,
+          remark: this.remark
+        })
+        console.log('cart提交订单成功', data)
+      }
+      if (this.getModeType === 'buyNow') {
+        const { data } = await checkOrder(this.getModeType, {
+          remark: this.remark,
+          goodsId: this.goodsId,
+          goodsNum: this.goodsNum,
+          goodsSkuId: this.goodsSkuId
+        })
+        console.log('buyNow提交订单成功', data)
+      }
+      this.$router.replace('/myorder')
     }
   }
 }
