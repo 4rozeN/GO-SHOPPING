@@ -44,3 +44,61 @@ export const getMyOrderList = (dataType, page) => {
     }
   })
 }
+
+// 获取订单详情
+export const getOrderDetail = (orderId) => {
+  return request.get('/order/detail', {
+    params: {
+      orderId: orderId
+    }
+  })
+}
+
+// 取消订单
+export const cancelOrder = (orderId) => {
+  return request.post('/order/cancel', {
+    orderId: orderId
+  })
+}
+
+// 支付未支付的订单
+export const payOrder = (orderId, payType) => {
+  return request.get('/order/pay', {
+    query: {
+      orderId: orderId,
+      payType: payType // 支付方式，10：余额支付，20：微信支付
+    }
+  })
+}
+
+// 订单确认收货
+export const receiptOrder = (orderId) => {
+  return request.post('/order/receipt', {
+    orderId: orderId
+  })
+}
+
+// 提交商品评价
+export const submitComment = (dataObj) => {
+  return request.post('/order.comment/submit', {
+    orderId: dataObj.orderId,
+    form: dataObj.form
+  })
+}
+
+// 已评价的商品列表
+export const getCommentList = (orderId) => {
+  return request.get('/order.comment/list', {
+    query: {
+      orderId: orderId
+    }
+  })
+}
+
+// 申请售后
+export const refundGoods = (dataObj) => {
+  return request.post('/refund/goods', {
+    orderGoodsId: dataObj.orderGoodsId,
+    form: dataObj.form
+  })
+}

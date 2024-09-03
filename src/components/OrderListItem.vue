@@ -11,7 +11,7 @@
         <div class="goods-img">
           <img :src="goods.goods_image" alt="">
         </div>
-        <div class="goods-content text-ellipsis-2">
+        <div class="goods-content text-ellipsis-2" @click="goDetail">
           {{ goods.goods_name }}
         </div>
         <div class="goods-trade">
@@ -44,6 +44,17 @@ export default {
       default: () => {
         return {}
       }
+    }
+  },
+  methods: {
+    // 跳转到订单详情页
+    goDetail () {
+      this.$router.push({
+        path: '/myorder/detail',
+        query: {
+          orderId: this.item.order_id
+        }
+      })
     }
   }
 }

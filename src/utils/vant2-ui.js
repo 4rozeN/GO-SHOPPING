@@ -1,6 +1,6 @@
 // vant2-ui.js按需导入组件
 import Vue from 'vue'
-import { Button, Tabbar, TabbarItem, NavBar, Toast, Search, Swipe, SwipeItem, Grid, GridItem, Icon, Sidebar, SidebarItem, Rate, ActionSheet, Dialog, Checkbox, CheckboxGroup, Empty, AddressList, AddressEdit, Tab, Tabs, Skeleton } from 'vant'
+import { Button, Tabbar, TabbarItem, NavBar, Toast, Search, Swipe, SwipeItem, Grid, GridItem, Icon, Sidebar, SidebarItem, Rate, ActionSheet, Dialog, Checkbox, CheckboxGroup, Empty, AddressList, AddressEdit, Tab, Tabs, Skeleton, Card, Tag, Step, Steps } from 'vant'
 
 Vue.use(Tabbar)
 Vue.use(Dialog)
@@ -26,3 +26,7 @@ Vue.use(AddressEdit)
 Vue.use(Tab)
 Vue.use(Tabs)
 Vue.use(Skeleton)
+Vue.use(Card)
+Vue.use(Tag)
+Vue.use(Step)
+Vue.use(Steps)

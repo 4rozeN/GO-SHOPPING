@@ -38,6 +38,7 @@ export default {
         })
       })
       this.list = list.data
+      console.log('订单列表：', this.list)
     }
   },
   watch: {

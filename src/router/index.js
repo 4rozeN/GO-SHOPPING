@@ -16,6 +16,7 @@ const ProductDetail = () => import('@/views/productdetail')
 const GoodsEvaluation = () => import('@/views/productdetail/evaluation')
 const Address = () => import('@/views/address/index.vue')
 const AddressEdit = () => import('@/views/address/edit.vue')
+const OrderDetail = () => import('@/views/myorder/detail.vue')
 // const AddressManage = () => import('@/views/address/manage.vue')
 const NotFound = () => import('@/views/404')
 
@@ -37,6 +38,7 @@ const routes = [
   { path: '/search', component: Search },
   { path: '/searchlist', component: SearchList },
   { path: '/myorder', component: myorder },
+  { path: '/myorder/detail', component: OrderDetail },
   { path: '/pay', component: Pay, name: 'Pay' },
   // 配置动态商品id，用于确认将来是哪个商品详情页
   { path: '/productdetail/:id', component: ProductDetail },
