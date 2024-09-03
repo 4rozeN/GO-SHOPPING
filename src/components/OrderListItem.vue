@@ -26,8 +26,8 @@
     <div class="actions">
       <div v-if="item.order_status === 10">
         <span v-if="item.pay_status === 10">立刻付款</span>
-        <span v-else-if="item.delivery_status === 10">申请取消</span>
-        <span v-else-if="item.delivery_status === 20 || item.delivery_status === 30">确认收货</span>
+        <span v-else-if="item.delivery_status === 10" @click="cancelOrder">申请取消</span>
+        <span v-else-if="item.delivery_status === 20 || item.delivery_status === 30" @click="orderConfirm">确认收货</span>
       </div>
       <div v-if="item.order_status === 30">
         <span>评价</span>
@@ -37,6 +37,8 @@
 </template>
 
 <script>
+import { Dialog, Toast } from 'vant'
+import { cancelOrder, receiptOrder } from '@/api/order'
 export default {
   props: {
     item: {
@@ -55,6 +57,38 @@ export default {
           orderId: this.item.order_id
         }
       })
+    },
+    async orderConfirmCheck () {
+      await receiptOrder(this.item.order_id)
+      Toast('确认收货成功')
+      // 重新拉取订单详情
+      this.$router.go(0)
+    },
+    orderConfirm () {
+      Dialog.confirm({
+        title: '确认收货',
+        message: '确定已收到货物并确认收货吗？',
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+      }).then(() => {
+        this.orderConfirmCheck()
+      })
+    },
+    async cancelCheck () {
+      await cancelOrder(this.item.order_id)
+      Toast('取消订单成功')
+      // 重新拉取订单详情
+      this.$router.go(0)
+    },
+    cancelOrder () {
+      Dialog.confirm({
+        title: '取消订单确认',
+        message: '确定要取消该订单吗？',
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+      }).then(() => {
+        this.cancelCheck()
+      }).catch(() => {})
     }
   }
 }

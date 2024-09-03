@@ -2,7 +2,7 @@
   <div class="user">
     <div class="head-page" v-if="isLogin">
       <div class="head-img">
-        <img src="@/assets/default-avatar.png" alt="" />
+        <img src="@/assets/default-avatar.png" alt="" @click="ifUploadeImg"/>
       </div>
       <div class="info">
         <div class="mobile">{{ detail.mobile }}</div>
@@ -120,6 +120,8 @@ export default {
     }
   },
   methods: {
+    async ifUploadeImg () {
+    },
     async getUserInfoDetail () {
       const { data: { userInfo } } = await getUserInfoDetail()
       this.detail = userInfo

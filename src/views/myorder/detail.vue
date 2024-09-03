@@ -62,22 +62,35 @@
       <!-- 添加返回首页按钮 -->
       <button class="footer-home">首页</button>
       <!-- 底部导航提供三个按钮：1. 申请售后或确认收货（根据订单状态而定） 2. 评价（根据订单状态而定） 3. 再次购买-->
-      <button class="footer-button secondary">申请售后</button>
-      <button class="footer-button secondary">订单评价</button>
-      <button class="footer-button primary">再次购买</button>
+      <button class="footer-button secondary" v-if="order.goods.order_status === 30">申请售后</button>
+      <button class="footer-button secondary" @click="orderEvaluate">订单评价</button>
+      <button class="footer-button primary" @click="buyAgain">再次购买</button>
     </div>
   </div>
 </template>
 
 <script>
 import { getOrderDetail } from '@/api/order'
+import { addCart } from '@/api/cart'
 export default {
   name: 'OrderDetail',
   data () {
     return {
       countPrice: 0,
       countNum: 0,
-      order: {}
+      order: {
+        goods: [],
+        address: {
+          name: '',
+          phone: '',
+          region: {
+            province: '',
+            city: '',
+            region: ''
+          },
+          detail: ''
+        }
+      }
     }
   },
   async created () {
@@ -109,6 +122,30 @@ export default {
     }
   },
   methods: {
+    orderEvaluate () {
+      this.$router.push({
+        path: '/myorder/review',
+        query: {
+          orderId: this.order.order_id
+        }
+      })
+    },
+    async buyAgain () {
+      // 得到goodsId、goodsNum和goodsSkuId，将商品加入购物车
+      // 遍历this.order的goods数组，得到每个商品的goods_id、goods_num和goods_sku_id
+      try {
+        // 遍历 this.order.goods 数组
+        for (const item of this.order.goods) {
+          // 发送请求，将商品加入购物车
+          await addCart(item.goods_id, item.total_num, item.goods_sku_id)
+        }
+        this.$router.push({ path: '/cart' })
+      // 如果需要，可以在这里执行购物车加入成功后的操作
+      } catch (err) {
+        console.error('Error adding items to cart:', err)
+      // 处理错误，例如显示错误信息给用户
+      }
+    },
     countGoodsNum () {
       this.order.goods.forEach(el => {
         el.total_num && (this.countNum += el.total_num)
