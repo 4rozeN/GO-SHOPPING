@@ -60,7 +60,7 @@
 
     <div class="footer">
       <!-- 添加返回首页按钮 -->
-      <button class="footer-home">首页</button>
+      <button class="footer-home" @click="$router.push('/home')">首页</button>
       <!-- 底部导航提供三个按钮：1. 申请售后或确认收货（根据订单状态而定） 2. 评价（根据订单状态而定） 3. 再次购买-->
       <button class="footer-button secondary" v-if="order.goods.order_status === 30">申请售后</button>
       <button class="footer-button secondary" @click="orderEvaluate">订单评价</button>
