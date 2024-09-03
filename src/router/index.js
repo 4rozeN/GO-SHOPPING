@@ -18,6 +18,7 @@ const Address = () => import('@/views/address/index.vue')
 const AddressEdit = () => import('@/views/address/edit.vue')
 const OrderDetail = () => import('@/views/myorder/detail.vue')
 const OrderReview = () => import('@/views/myorder/review.vue')
+const ImageCrop = () => import('@/views/imagecrop/ImgUpload.vue')
 // const AddressManage = () => import('@/views/address/manage.vue')
 const NotFound = () => import('@/views/404')
 
@@ -47,6 +48,7 @@ const routes = [
   { path: '/evaluation/:id', component: GoodsEvaluation },
   { path: '/address/manage', component: Address, name: 'AddressM' },
   { path: '/address/edit', component: AddressEdit, name: 'AddressE' },
+  { path: '/imgcrop', component: ImageCrop },
 
   // 404页面
   { path: '*', component: NotFound }

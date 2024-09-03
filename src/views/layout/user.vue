@@ -40,7 +40,7 @@
       </div>
       <div class="asset-right">
         <div class="asset-right-item">
-          <van-icon name="balance-pay" />
+          <van-icon name="balance-pay" @click="myWallet"/>
           <span>我的钱包</span>
         </div>
       </div>
@@ -102,6 +102,7 @@
 
 <script>
 import { getUserInfoDetail } from '@/api/user.js'
+import { Dialog } from 'vant'
 export default {
   name: 'UserPage',
   data () {
@@ -120,7 +121,14 @@ export default {
     }
   },
   methods: {
-    async ifUploadeImg () {
+    myWallet () {
+      Dialog.alert({
+        title: '提示',
+        message: '当前为余额结算，暂不支持三方支付'
+      })
+    },
+    ifUploadeImg () {
+      // this.$router.push('/imgcrop')
     },
     async getUserInfoDetail () {
       const { data: { userInfo } } = await getUserInfoDetail()

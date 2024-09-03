@@ -27,7 +27,7 @@
 
 <script>
 import VueCropper from 'vue-cropper'
-import { uploadImage } from '@/api/upload'
+import { uploadImage } from '@/api/user'
 
 export default {
   components: {
