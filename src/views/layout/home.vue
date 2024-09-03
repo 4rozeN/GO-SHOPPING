@@ -1,13 +1,13 @@
 <template>
   <div class="home">
     <!-- 导航条 -->
-    <van-nav-bar title="智慧商城" fixed />
+    <van-nav-bar title="GO-SHOPPING" fixed />
 
     <!-- 搜索框 -->
     <van-search
       readonly
       shape="round"
-      background="#f1f1f2"
+      background="#E6E6E6"
       placeholder="请在此输入搜索关键词"
       @click="$router.push('/search')"
     />

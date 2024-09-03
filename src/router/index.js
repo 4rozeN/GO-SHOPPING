@@ -16,6 +16,7 @@ const ProductDetail = () => import('@/views/productdetail')
 const GoodsEvaluation = () => import('@/views/productdetail/evaluation')
 const Address = () => import('@/views/address/index.vue')
 const AddressEdit = () => import('@/views/address/edit.vue')
+// const AddressManage = () => import('@/views/address/manage.vue')
 const NotFound = () => import('@/views/404')
 
 Vue.use(VueRouter)

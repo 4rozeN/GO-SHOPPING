@@ -96,55 +96,51 @@
 
 <script>
 import addressCTN from '@/mixins/addressCTN' // 将地区Code转为Name，需要传入regionCode
+import addressHandler from '@/mixins/addressHandler'
 import { mapActions, mapGetters, mapMutations } from 'vuex'
 import { checkOrder, submitOrder } from '@/api/order'
 import { getDefaultAddressId, getAddressList, getAddressDetail } from '@/api/address'
 
 export default {
   name: 'PayIndex',
-  mixins: [addressCTN],
+  mixins: [addressCTN, addressHandler],
   async created () {
     // console.log('params:', this.$route.params.adsid)
-    if (this.getSelection()) {
-      // console.log('有选择地址!')
-      this.showToggleAddress()
+    try {
+      // 尝试拉取默认地址id，如无赋值为0
+      const { data: { defaultId } } = await this.myDefaultAddressId() || 0
+      this.myDefaultId = defaultId
+      console.log('defaultId:', defaultId)
+    } catch (error) {
+      this.myDefaultId = 0
+      console.log('没有默认地址Id', error)
+    }
+    await this.myAddressList()
+    if (this.addressList.length === 0) {
+      // 说明没有地址存在，啥也不干
+      this.chosenAddress = 0
+      console.log('没有地址存在，啥也干不了')
     } else {
-      // 没有手动切换过地址，则拉取地址列表得到地址进行展示
-      try {
-        // 尝试拉取默认地址id，如无赋值为0
-        const { data: { defaultId } } = await this.myDefaultAddressId() || 0
-        this.myDefaultId = defaultId
-        console.log('defaultId:', defaultId)
-      } catch (error) {
-        this.myDefaultId = 0
-        console.log('没有默认地址Id', error)
-      }
-      await this.myAddressList()
-      if (this.addressList.length === 0) {
-        // 说明没有地址存在，啥也不干
-        this.chosenAddress = 0
-        console.log('没有地址存在，啥也干不了')
+      // 说明有地址存在
+      if (this.myDefaultId) {
+        // 说明有默认地址，拉取地址详情
+        const res = await this.myAddressDetail(Number(this.myDefaultId))
+        console.log('地址res:', res)
+        // 格式化地区信息
+        res.detail = this.getRegionStrByCode(this.getRegionCode(res.province_id, res.city_id, res.region_id)) + ' ' + res.detail
+        // 将得到的地址信息给本地进行渲染
+        this.chosenAddress = res
+        console.log('有默认地址，地址详情res：', res)
+        console.log('格式化后的地址：', this.chosenAddress)
       } else {
-        // 说明有地址存在
-        if (this.myDefaultId) {
-          // 说明有默认地址，拉取地址详情
-          const res = await this.myAddressDetail(Number(this.myDefaultId))
-          // 格式化地区信息
-          res.detail = this.getRegionStrByCode(String(res.region_id)) + res.detail
-          // 将得到的地址信息给本地进行渲染
-          this.chosenAddress = res
-          console.log('有默认地址，地址详情res：', res)
-          console.log('格式化后的地址：', this.chosenAddress)
-        } else {
-          // 说明没有默认地址Id，展示地址列表的第一个数据
-          const res = await this.myAddressListZero()
-          // 格式化地区信息
-          res.detail = this.getRegionStrByCode(String(res.region_id)) + res.detail
-          // 将得到的地址信息给本地进行渲染
-          this.chosenAddress = res
-          console.log('没有默认地址，展示第一个地址：', res)
-          console.log('格式化后的地址：', this.chosenAddress)
-        }
+        // 说明没有默认地址Id，展示地址列表的第一个数据
+        const res = await this.myAddressListZero()
+        // 格式化地区信息
+        res.detail = this.getRegionStrByCode(this.getRegionCode(res.province_id, res.city_id, res.region_id)) + ' ' + res.detail
+        // 将得到的地址信息给本地进行渲染
+        this.chosenAddress = res
+        console.log('没有默认地址，展示第一个地址：', res)
+        console.log('格式化后的地址：', this.chosenAddress)
       }
     }
     // 提交订单
@@ -211,19 +207,6 @@ export default {
     ...mapActions('Cart', ['getCartAction']),
     ...mapGetters('Cart', ['selectedCartList', 'selectedCartCount', 'selectedPrice']),
     ...mapGetters('Order', ['getMode', 'getCartIds']),
-    // 展示切换选中的地址详情
-    async showToggleAddress () {
-      const resId = this.getSelection()
-      // console.log('选择的地址Id:', resId)
-      try {
-        const resInfo = await this.myAddressDetail(resId)
-        resInfo.detail = this.getRegionStrByCode(String(resInfo.region_id)) + resInfo.detail
-        // console.log('选择的地址详情resInfo:', resInfo)
-        this.chosenAddress = resInfo
-      } catch (error) {
-        console.log('切换地址失败', error)
-      }
-    },
     // 得到地址列表
     async myAddressList () {
       const { data: { list } } = await getAddressList()

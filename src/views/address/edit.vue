@@ -27,10 +27,11 @@ import { mapActions, mapGetters, mapMutations } from 'vuex'
 import { areaList } from '@vant/area-data' // 引入vant官方的地区数据
 import { getAddressDetail, getDefaultAddressId, addAddress, updateAddress, setDefaultAddress, deleteAddress } from '@/api/address'
 import addressCTN from '@/mixins/addressCTN'
+import addressHandler from '@/mixins/addressHandler'
 
 export default {
   name: 'AddressEdit',
-  mixins: [addressCTN],
+  mixins: [addressCTN, addressHandler],
   data () {
     return {
       ifDefaultId: 0, // 获取到的默认地址id
@@ -70,13 +71,18 @@ export default {
         // 补全缺少的isDefault属性，并设置为true
         this.addressInfo.isDefault = true
       } else { this.addressInfo.isDefault = false }
+      console.log('setDefaultAft:this.addressInfo', this.addressInfo)
+      // 将后端返回的短地址code转为标准长地址Code
+      const resCode = this.getRegionCode(this.addressInfo.province_id, this.addressInfo.city_id, this.addressInfo.region_id)
+      console.log('resCode:', resCode)
+
       // 通过Code得到地址Name
-      this.addressInfo.region_id = String(this.addressInfo.region_id)
+      this.addressInfo.region_id = String(resCode)
       // console.log('this.addressInfo.region_id:', this.addressInfo.region_id)
       this.addressInfo.region = this.getRegionStrByCode(this.addressInfo.region_id)
       // 格式化地址详情使其便于组件渲染
       this.formatStructure(this.addressInfo)
-      // console.log('格式化后的this.addressInfo:', this.addressInfo)
+      console.log('格式化后的this.addressInfo:', this.addressInfo)
     } else {
       // 说明是新增操作，啥也不做
     }
@@ -91,13 +97,14 @@ export default {
       const dataObj = {
         form: {
           name: content.name,
-          phone: '13800138000',
-          region: [{ value: 1, label: '北京市' }, { value: 2, label: '北京市' }, { value: 3, label: '东城区' }],
-          detail: '这是有效的测试地址...'
+          phone: '13233324567',
+          region: [{ value: 1, label: '北京' }, { value: 2, label: '北京市' }, { value: 3, label: '东城区' }],
+          detail: '这是一个有效的测试地址'
         }
       }
       try {
         await addAddress(dataObj)
+        Toast('保存成功')
       } catch (error) {
         console.log('添加后端有效地址错误：', error)
       }
@@ -106,16 +113,17 @@ export default {
       // 新增地址（根据vant地区库数据封装）
       // 通过areaCode得到省市区三个Code
       console.log('新增地址:', addressObj)
-      const { provinceCode, cityCode, countyCode } = this.getThreeCodeByRegionCode(addressObj.areaCode)
+      // 将content的标准地址格式转换为 provinceId, cityId, countyId 对象
+      const { provinceId, cityId, countyId } = this.getIdsFromRegionCode(addressObj.areaCode)
       // 封装接口需要的参数对象
       const dataObj = {
         form: {
           name: addressObj.name,
           phone: addressObj.tel,
           region: [
-            { value: Number(provinceCode), label: addressObj.province },
-            { value: Number(cityCode), label: addressObj.city },
-            { value: Number(countyCode), label: addressObj.county }
+            { value: Number(provinceId), label: addressObj.province },
+            { value: Number(cityId), label: addressObj.city },
+            { value: Number(countyId), label: addressObj.county }
           ],
           detail: addressObj.addressDetail
         }
@@ -130,8 +138,10 @@ export default {
       }
     },
     async updateOneAdress (addressObj) {
+      console.log('更新地址:', addressObj)
       // 通过areaCode得到省市区三个Code
-      const { provinceCode, cityCode, countyCode } = this.getThreeCodeByRegionCode(addressObj.areaCode)
+      const res = this.getIdsFromRegionCode(String(addressObj.areaCode))
+      console.log('res:', res)
       // 封装接口需要的参数对象
       const dataObj = {
         addressId: String(addressObj.id),
@@ -139,9 +149,9 @@ export default {
           name: addressObj.name,
           phone: addressObj.tel,
           region: [
-            { value: provinceCode, label: addressObj.province },
-            { value: cityCode, label: addressObj.city },
-            { value: countyCode, label: addressObj.county }
+            { value: res.provinceId, label: addressObj.province },
+            { value: res.cityId, label: addressObj.city },
+            { value: res.countyId, label: addressObj.county }
           ],
           detail: addressObj.addressDetail
         }
@@ -170,8 +180,8 @@ export default {
       // 判断是新建地址还是编辑地址
       if (this.editAddressId === 0) {
         // 新建地址
-        // this.addOneAdress(content)
-        this.addOneTrue(content) // 测试用
+        this.addOneAdress(content)
+        // this.addOneTrue(content) // 测试用
       } else {
         // 编辑地址
         this.updateOneAdress(content)
@@ -180,7 +190,7 @@ export default {
     // 删除按钮的点击事件
     async onDelete (content) {
       console.log('删除地址:', content)
-      await deleteAddress(content.id)
+      await deleteAddress(content.address_id)
       Toast('删除成功')
       // 刷新页面
       this.$router.replace({

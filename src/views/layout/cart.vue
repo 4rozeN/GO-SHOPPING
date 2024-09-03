@@ -19,8 +19,8 @@
           <div class="show">
             <img :src="item.goods.goods_image" alt="">
           </div>
-          <div class="info"  @click="$router.push(`/productdetail/${item.goods_id}`)">
-            <span class="tit text-ellipsis-2">{{ item.goods.goods_name }}</span>
+          <div class="info">
+            <span class="tit text-ellipsis-2" @click="$router.push(`/productdetail/${item.goods_id}`)">{{ item.goods.goods_name }}</span>
             <span class="bottom">
               <div class="price">¥ <span>{{ item.goods.goods_price_min }}</span></div>
               <CountBox @input="changeCount(item.goods_id, $event, item.goods_sku_id)" :value="item.goods_num"></CountBox>

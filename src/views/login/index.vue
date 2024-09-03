@@ -2,13 +2,13 @@
   <div class="login">
     <!-- 头部 NavBar -->
     <van-nav-bar
-      title="尊敬的用户，请登录"
+      title="登录页面"
       left-arrow
       @click-left="$router.go(-1)"
     />
 
     <!-- 主体部分 自定义 -->
-    <div class="container">
+    <div class="container" v-if="!isLogin">
       <div class="title">
         <h3>手机号登录</h3>
         <p>未注册的手机号登录后将自动注册</p>
@@ -30,12 +30,15 @@
 
       <div class="login-btn" @click="login">登录</div>
     </div>
+    <div class="empty">
+    <van-skeleton title avatar :row="10" />
+    </div>
   </div>
 </template>
 
 <script>
 import { codeLogin, getMsgCode, getPicCode } from '@/api/login'
-import { Toast } from 'vant'
+import { Toast, Dialog } from 'vant'
 
 export default {
   name: 'LoginIndex',
@@ -55,7 +58,22 @@ export default {
     }
   },
   async created () {
+    if (this.isLogin) {
+      Dialog.alert({
+        title: '已登录提醒',
+        message: '您已登录，请勿重复登录！',
+        confirmButtonText: '确定'
+      }).then(() => {
+        this.$router.replace('/')
+      })
+    }
     this.getPicCode()
+  },
+  computed: {
+    // 判断是否登录
+    isLogin () {
+      return this.$store.getters.token
+    }
   },
   methods: {
     // 获取图形验证码
@@ -197,5 +215,8 @@ export default {
     justify-content: center;
     align-items: center;
   }
+}
+.empty {
+padding: 70px 0px;
 }
 </style>

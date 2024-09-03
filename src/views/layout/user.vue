@@ -26,7 +26,7 @@
     <div class="my-asset">
       <div class="asset-left">
         <div class="asset-left-item">
-          <span>{{ detail.pay_money || 0 }}</span>
+          <span>￥{{ detail.balance || 0 }}</span>
           <span>账户余额</span>
         </div>
         <div class="asset-left-item">
@@ -67,7 +67,7 @@
     <div class="service">
       <div class="title">我的服务</div>
       <div class="content">
-        <div class="content-item">
+        <div class="content-item" @click="$router.push('/address/manage')">
           <van-icon name="records" />
           <span>收货地址</span>
         </div>
@@ -123,7 +123,7 @@ export default {
     async getUserInfoDetail () {
       const { data: { userInfo } } = await getUserInfoDetail()
       this.detail = userInfo
-      console.log(this.detail)
+      // console.log(this.detail)
     },
     logout () {
       this.$dialog.confirm({
