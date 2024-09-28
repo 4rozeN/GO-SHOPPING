@@ -2,11 +2,6 @@
 >
 > 本项目笔记：[GO-SHOPPING](https://4rozen.github.io/2024/08/30/Go-shopping%E5%95%86%E5%9F%8E%E9%A1%B9%E7%9B%AE/)
 
-- 重点: 接口需要token的地方，header中， Access-Token:${token}
-- 重点: 接口需要platform的地方，header中，platform: h5或mp-weixin
-- 接口调用基础地址：http://smart-shop.itheima.net/index.php?s=/api
-- 关于接口的说明：分为了http状态码和接口中code对应码
-
 | 码值           | 说明                         |
 | -------------- | ---------------------------- |
 | http状态码 500 | 服务器端异常，请联系后端老师 |
