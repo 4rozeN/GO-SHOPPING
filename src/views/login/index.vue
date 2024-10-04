@@ -30,8 +30,8 @@
 
       <div class="login-btn" @click="login">登录</div>
     </div>
-    <div class="empty">
-    <van-skeleton title avatar :row="10" />
+    <div class="empty" v-else>
+      <van-skeleton title avatar :row="10" />
     </div>
   </div>
 </template>
